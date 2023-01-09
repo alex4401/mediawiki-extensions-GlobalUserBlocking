@@ -14,9 +14,9 @@ class GlobalUserBlock extends AbstractBlock {
         return null;
     }
 
-    public static function getBlockId( string $target ): ?int {
+    public static function getBlockId( string $target ): int {
         // TODO: stub
-        return null;
+        return 0;
     }
 
 	/**
