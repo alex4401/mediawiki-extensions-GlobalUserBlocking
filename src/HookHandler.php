@@ -85,6 +85,27 @@ class HookHandler implements
     }
 
     public function onContributionsToolLinks( $id, Title $title, array &$tools, SpecialPage $specialPage ) {
+		$linkRenderer = $specialPage->getLinkRenderer();
+		$user = $specialPage->getUser();
+        $target = $title->getText();
 
+        if ( $this->permissionManager->userHasRight( $user, 'globaluserblock' ) ) {
+            if ( GlobalUserBlock::getBlockId( $target ) === 0 ) {
+                $tools['gub'] = $linkRenderer->makeKnownLink(
+                    SpecialPage::getTitleFor( 'GlobalBlockUser', $target ),
+                    $specialPage->msg( 'globaluserblocking-contribs-add' )->text()
+                );
+            } else {
+                $tools['gub'] = $linkRenderer->makeKnownLink(
+                    SpecialPage::getTitleFor( 'GlobalBlockUser', $target ),
+                    $specialPage->msg( 'globaluserblocking-contribs-modify' )->text()
+                );
+
+                $tools['guub'] = $linkRenderer->makeKnownLink(
+                    SpecialPage::getTitleFor( 'GlobalUnblockUser', $target ),
+                    $specialPage->msg( 'globaluserblocking-contribs-remove' )->text()
+                );
+            }
+        }
     }
 }
