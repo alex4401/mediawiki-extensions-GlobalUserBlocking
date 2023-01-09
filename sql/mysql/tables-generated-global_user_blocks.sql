@@ -4,7 +4,7 @@
 -- See https://www.mediawiki.org/wiki/Manual:Schema_changes
 CREATE TABLE /*_*/global_user_blocks (
   gub_id INT UNSIGNED AUTO_INCREMENT NOT NULL,
-  gub_address TINYBLOB NOT NULL,
+  gub_target TINYBLOB NOT NULL,
   gub_central_user INT UNSIGNED DEFAULT 0 NOT NULL,
   gub_by_central_user BIGINT UNSIGNED NOT NULL,
   gub_reason VARBINARY(767) NOT NULL,
@@ -18,9 +18,8 @@ CREATE TABLE /*_*/global_user_blocks (
   gub_block_email TINYINT(1) DEFAULT 0 NOT NULL,
   gub_allow_usertalk TINYINT(1) DEFAULT 0 NOT NULL,
   gub_parent_block_id INT UNSIGNED DEFAULT NULL,
-  gub_sitewide TINYINT(1) DEFAULT 1 NOT NULL,
-  UNIQUE INDEX gub_address_unique (
-    gub_address(255),
+  UNIQUE INDEX gub_target_unique (
+    gub_target(255),
     gub_central_user,
     gub_auto
   ),

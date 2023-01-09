@@ -14,7 +14,7 @@
 				}
 			},
 			{
-				"name": "gub_address",
+				"name": "gub_target",
 				"comment": "Blocked IP address in dotted-quad form or user name.",
 				"type": "blob",
 				"options": {
@@ -61,7 +61,7 @@
 			},
 			{
 				"name": "gub_auto",
-				"comment": "Indicates that the IP address was banned because a banned user accessed a page through it. If this is 1, gub_address will be hidden, and the block identified by block ID number.",
+				"comment": "Indicates that the IP address was banned because a banned user accessed a page through it. If this is 1, gub_target will be hidden, and the block identified by block ID number.",
 				"type": "mwtinyint",
 				"options": {
 					"notnull": true,
@@ -149,24 +149,14 @@
 					"unsigned": true,
 					"default": null
 				}
-			},
-			{
-				"name": "gub_sitewide",
-				"comment": "Block user from editing any page on the site (other than their own user talk page).",
-				"type": "mwtinyint",
-				"options": {
-					"notnull": true,
-					"length": 1,
-					"default": 1
-				}
 			}
 		],
 		"indexes": [
 			{
-				"name": "gub_address_unique",
+				"name": "gub_target_unique",
 				"comment": "Unique index to support \"user already blocked\" messages. Any new options which prevent collisions should be included",
 				"columns": [
-					"gub_address",
+					"gub_target",
 					"gub_central_user",
 					"gub_auto"
 				],
