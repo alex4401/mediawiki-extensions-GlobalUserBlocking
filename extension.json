@@ -1,0 +1,76 @@
+{
+	"name": "Global User Blocking",
+	"version": "0.1.0",
+
+	"author": [
+		"alex4401"
+	],
+	"url": "https://mediawiki.org/wiki/Extension:GlobalUserBlocking",
+	"descriptionmsg": "globaluserblocking-desc",
+	"license-name": "GPL-3.0-or-later",
+	"type": "other",
+
+	"requires": {
+		"MediaWiki": ">= 1.39.0",
+		"platform": {
+			"php": ">= 7.4"
+		}
+	},
+
+	"MessagesDirs": {
+		"GlobalUserBlocking": [
+			"i18n"
+		]
+	},
+
+	"AvailableRights": [
+		"globaluserblock",
+		"globaluserblockexempt"
+	],
+	"LogTypes": [
+		"globaluserblock"
+	],
+
+	"AutoloadNamespaces": {
+		"MediaWiki\\Extension\\GlobalUserBlocking\\": "src/"
+	},
+
+	"APIModules": {
+		"globaluserblock": {
+			"class": "MediaWiki\\Extension\\GlobalUserBlocking\\ApiGlobalUserBlock",
+			"services": [
+				"BlockUserFactory"
+			]
+		}
+	},
+
+	"SpecialPages": {
+		"GlobalBlockUser": {
+			"class": "MediaWiki\\Extension\\GlobalUserBlocking\\SpecialPages\\SpecialGlobalBlockUser",
+			"services": [
+				"BlockUserFactory",
+				"BlockUtils"
+			]
+		},
+		"GlobalBlockedUserList": {
+			"class": "MediaWiki\\Extension\\GlobalUserBlocking\\SpecialPages\\SpecialGlobalBlockedUserList",
+			"services": [
+				"BlockUtils",
+				"CommentFormatter"
+			]
+		}
+	},
+	
+	"Hooks": {
+		"GetUserBlock": "MainHandler",
+		"LoadExtensionSchemaUpdates": "MainHandler",
+		"ContributionsToolLinks": "MainHandler"
+	},
+    "HookHandlers": {
+        "MainHandler": {
+            "class": "MediaWiki\\Extension\\GlobalUserBlocking\\HookHandler"
+        }
+    },
+
+	"manifest_version": 2
+}
