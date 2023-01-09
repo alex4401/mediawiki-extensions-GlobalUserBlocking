@@ -1,0 +1,213 @@
+[
+	{
+		"name": "global_user_blocks",
+		"comment": "Global blocks against user accounts. This should be a shared table.",
+		"columns": [
+			{
+				"name": "gub_id",
+				"comment": "Primary key.",
+				"type": "integer",
+				"options": {
+					"autoincrement": true,
+					"notnull": true,
+					"unsigned": true
+				}
+			},
+			{
+				"name": "gub_address",
+				"comment": "Blocked IP address in dotted-quad form or user name.",
+				"type": "blob",
+				"options": {
+					"notnull": true,
+					"length": 255
+				}
+			},
+			{
+				"name": "gub_central_user",
+				"comment": "Blocked central user ID.",
+				"type": "integer",
+				"options": {
+					"unsigned": true,
+					"notnull": true,
+					"default": 0
+				}
+			},
+			{
+				"name": "gub_by_central_user",
+				"comment": "Central ID of the user who made the block.",
+				"type": "bigint",
+				"options": {
+					"unsigned": true,
+					"notnull": true
+				}
+			},
+			{
+				"name": "gub_reason",
+				"comment": "Text comment made by blocker.",
+				"type": "binary",
+				"options": {
+					"unsigned": true,
+					"notnull": true,
+					"length": 767
+				}
+			},
+			{
+				"name": "gub_timestamp",
+				"comment": "Creation (or refresh) date in standard YMDHMS form.",
+				"type": "mwtimestamp",
+				"options": {
+					"notnull": true
+				}
+			},
+			{
+				"name": "gub_auto",
+				"comment": "Indicates that the IP address was banned because a banned user accessed a page through it. If this is 1, gub_address will be hidden, and the block identified by block ID number.",
+				"type": "mwtinyint",
+				"options": {
+					"notnull": true,
+					"length": 1,
+					"default": 0
+				}
+			},
+			{
+				"name": "gub_anon_only",
+				"comment": "If set to 1, block applies only to logged-out users",
+				"type": "mwtinyint",
+				"options": {
+					"notnull": true,
+					"length": 1,
+					"default": 0
+				}
+			},
+			{
+				"name": "gub_create_account",
+				"comment": "Block prevents account creation from matching IP addresses",
+				"type": "mwtinyint",
+				"options": {
+					"notnull": true,
+					"length": 1,
+					"default": 1
+				}
+			},
+			{
+				"name": "gub_enable_autoblock",
+				"comment": "Block triggers autoblocks",
+				"type": "mwtinyint",
+				"options": {
+					"notnull": true,
+					"length": 1,
+					"default": 1
+				}
+			},
+			{
+				"name": "gub_expiry",
+				"comment": "Time at which the block will expire. May be \"infinity\"",
+				"type": "mwtimestamp",
+				"options": {
+					"notnull": true,
+					"CustomSchemaOptions": {
+						"allowInfinite": true
+					}
+				}
+			},
+			{
+				"name": "gub_deleted",
+				"comment": "Flag for entries hidden from users and sysops",
+				"type": "mwtinyint",
+				"options": {
+					"notnull": true,
+					"length": 1,
+					"default": 0
+				}
+			},
+			{
+				"name": "gub_block_email",
+				"comment": "Block prevents user from accessing Special:Emailuser",
+				"type": "mwtinyint",
+				"options": {
+					"notnull": true,
+					"length": 1,
+					"default": 0
+				}
+			},
+			{
+				"name": "gub_allow_usertalk",
+				"comment": "Block allows user to edit their own talk page",
+				"type": "mwtinyint",
+				"options": {
+					"notnull": true,
+					"length": 1,
+					"default": 0
+				}
+			},
+			{
+				"name": "gub_parent_block_id",
+				"comment": "ID of the block that caused this block to exist. Autoblocks set this to the original block so that the original block being deleted also deletes the autoblocks",
+				"type": "integer",
+				"options": {
+					"notnull": false,
+					"unsigned": true,
+					"default": null
+				}
+			},
+			{
+				"name": "gub_sitewide",
+				"comment": "Block user from editing any page on the site (other than their own user talk page).",
+				"type": "mwtinyint",
+				"options": {
+					"notnull": true,
+					"length": 1,
+					"default": 1
+				}
+			}
+		],
+		"indexes": [
+			{
+				"name": "gub_address_unique",
+				"comment": "Unique index to support \"user already blocked\" messages. Any new options which prevent collisions should be included",
+				"columns": [
+					"gub_address",
+					"gub_central_user",
+					"gub_auto"
+				],
+				"unique": true,
+				"options": { "lengths": [ 255, null, null ] }
+			},
+			{
+				"name": "gub_central_user",
+				"comment": "For querying whether a logged-in user is blocked",
+				"columns": [
+					"gub_central_user"
+				],
+				"unique": false
+			},
+			{
+				"name": "gub_timestamp",
+				"comment": "Index for Special:GlobalBlockedUserList",
+				"columns": [
+					"gub_timestamp"
+				],
+				"unique": false
+			},
+			{
+				"name": "gub_expiry",
+				"comment": "Index for table pruning",
+				"columns": [
+					"gub_expiry"
+				],
+				"unique": false
+			},
+			{
+				"name": "gub_parent_block_id",
+				"comment": "Index for removing autoblocks when a parent block is removed",
+				"columns": [
+					"gub_parent_block_id"
+				],
+				"unique": false
+			}
+		],
+		"pk": [
+			"gub_id"
+		]
+	}
+]
