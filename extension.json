@@ -62,15 +62,26 @@
 	},
 	
 	"Hooks": {
+		"LoadExtensionSchemaUpdates": "MediaWiki\\Extension\\GlobalUserBlocking\\HookHandler::onLoadExtensionSchemaUpdates",
 		"GetUserBlock": "MainHandler",
-		"LoadExtensionSchemaUpdates": "MainHandler",
 		"ContributionsToolLinks": "MainHandler"
 	},
     "HookHandlers": {
         "MainHandler": {
-            "class": "MediaWiki\\Extension\\GlobalUserBlocking\\HookHandler"
+            "class": "MediaWiki\\Extension\\GlobalUserBlocking\\HookHandler",
+			"services": [
+				"PermissionManager",
+				"MainConfig",
+				"CommentFormatter"
+			]
         }
     },
+
+	"config": {
+		"ApplyGlobalUserBlocks": {
+			"value": true
+		}
+	},
 
 	"manifest_version": 2
 }
