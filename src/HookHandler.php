@@ -1,11 +1,13 @@
 <?php
 namespace MediaWiki\Extension\GlobalUserBlocking;
 
-use Title;
-use SpecialPage;
-use MediaWiki\Permissions\PermissionManager;
 use Config;
+use MediaWiki\Permissions\PermissionManager;
+use MediaWiki\Block\CompositeBlock;
 use MediaWiki\CommentFormatter\CommentFormatter;
+use Message;
+use SpecialPage;
+use Title;
 
 class HookHandler implements
     \MediaWiki\Block\Hook\GetUserBlockHook,
@@ -48,7 +50,38 @@ class HookHandler implements
 	}
 
     public function onGetUserBlock( $user, $ip, &$block ) {
+        // Check if global blocks are enabled on this wiki, or maybe only managed
+        if ( !$this->config->get( 'ApplyGlobalUserBlocks' ) ) {
+            return true;
+        }
 
+        // Check if user is exempted locally from global blocks
+		if ( $this->permissionManager->userHasAnyRight( $user, 'globaluserblockexempt' ) ) {
+			return true;
+		}
+
+        // Retrieve the global block
+        $globalBlock = GlobalUserBlock::get( $user, $ip );
+        if ( !$globalBlock ) {
+            return true;
+        }
+
+        // Just return the block if local wiki has none
+        if ( !$block ) {
+            $block = $globalBlock;
+            return true;
+        }
+
+        // User (or IP) is blocked both globally and locally, return a composite
+		$allBlocks = $block instanceof CompositeBlock ? $block->getOriginalBlocks() : [ $block ];
+        $allBlocks[] = $globalBlock;
+        $block = new CompositeBlock( [
+            'address' => $ip,
+            'reason' => new Message( 'blockedtext-composite-reason' ),
+            'originalBlocks' => $allBlocks,
+        ] );
+
+        return true;
     }
 
     public function onContributionsToolLinks( $id, Title $title, array &$tools, SpecialPage $specialPage ) {
