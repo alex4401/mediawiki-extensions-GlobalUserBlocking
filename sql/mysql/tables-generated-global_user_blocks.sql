@@ -4,28 +4,26 @@
 -- See https://www.mediawiki.org/wiki/Manual:Schema_changes
 CREATE TABLE /*_*/global_user_blocks (
   gub_id INT UNSIGNED AUTO_INCREMENT NOT NULL,
-  gub_target TINYBLOB NOT NULL,
-  gub_central_user INT UNSIGNED DEFAULT 0 NOT NULL,
-  gub_by_central_user BIGINT UNSIGNED NOT NULL,
+  gub_target_address TINYBLOB NOT NULL,
+  gub_target_central_id INT UNSIGNED DEFAULT 0 NOT NULL,
+  gub_performer_central_id BIGINT UNSIGNED NOT NULL,
+  gub_wiki_id VARBINARY(255) NOT NULL,
   gub_reason VARBINARY(767) NOT NULL,
   gub_timestamp BINARY(14) NOT NULL,
-  gub_auto TINYINT(1) DEFAULT 0 NOT NULL,
   gub_anon_only TINYINT(1) DEFAULT 0 NOT NULL,
   gub_create_account TINYINT(1) DEFAULT 1 NOT NULL,
-  gub_enable_autoblock TINYINT(1) DEFAULT 1 NOT NULL,
   gub_expiry VARBINARY(14) NOT NULL,
+  gub_range_start TINYBLOB NOT NULL,
+  gub_range_end TINYBLOB NOT NULL,
   gub_deleted TINYINT(1) DEFAULT 0 NOT NULL,
   gub_block_email TINYINT(1) DEFAULT 0 NOT NULL,
   gub_allow_usertalk TINYINT(1) DEFAULT 0 NOT NULL,
-  gub_parent_block_id INT UNSIGNED DEFAULT NULL,
   UNIQUE INDEX gub_target_unique (
-    gub_target(255),
-    gub_central_user,
-    gub_auto
+    gub_target_address(255),
+    gub_target_central_id
   ),
-  INDEX gub_central_user (gub_central_user),
+  INDEX gub_target_central_id (gub_target_central_id),
   INDEX gub_timestamp (gub_timestamp),
   INDEX gub_expiry (gub_expiry),
-  INDEX gub_parent_block_id (gub_parent_block_id),
   PRIMARY KEY(gub_id)
 ) /*$wgDBTableOptions*/;

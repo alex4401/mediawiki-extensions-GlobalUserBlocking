@@ -1,0 +1,30 @@
+{
+    "@metadata": {
+        "authors": [
+            "alex4401"
+        ]
+    },
+
+    "globalblock-target": "Username, IP address, or IP range",
+    "globalblock-details": "Block details",
+    "globalblock-expiry": "Expiration",
+    "globalblock-reason": "Reason",
+    "globalblock-options": "Additional options",
+
+	"globalblock": "Block other users from editing globally",
+    "globalblockexempt": "Bypass global user, IP and range blocks",
+	"grant-globalblock": "Globally block or unblock users or IP addresses",
+
+	"globaluserblocking-logpage": "Global block log",
+	"globaluserblocking-logpagetext": "This is a log of global blocks which have been made or removed on this wiki.\nIt should be noted that global blocks can be made and removed on other wikis, and that these global blocks will affect this wiki.\nTo view all active global blocks, you may view the [[Special:GlobalBlockList|global block list]].",
+	"globaluserblocking-block-logentry": "globally blocked [[$1]] with an expiration time of $2 $3",
+	"globaluserblocking-reblock-logentry": "changed global block settings for [[$1]] with an expiration time of $2 $3",
+	"globaluserblocking-unblock-logentry": "removed global block on [[$1]]",
+	"globaluserblocking-logentry-expiry": "expiration $1",
+	"globaluserblocking-logentry-noexpiry": "no expiration set",
+	"globalblock-log-flags-anononly": "anonymous users only",
+	"globalblock-log-flags-nocreate": "account creation disabled",
+	"globalblock-log-flags-noemail": "email disabled",
+	"globalblock-log-flags-nousertalk": "cannot edit own talk page",
+	"globalblock-log-flags-hiddenname": "username hidden"
+}

@@ -24,16 +24,61 @@
 	},
 
 	"AvailableRights": [
-		"globaluserblock",
-		"globaluserblockexempt"
+		"globalblock",
+		"globalblockexempt"
 	],
+	"GroupPermissions": {
+		"bureaucrat": {
+			"globalblock": true,
+			"globalblockexempt": true
+		}
+	},
+	"GrantPermissions": {
+		"basic": {
+			"globalblockexempt": true
+		},
+		"globalblock": {
+			"globalblock": true
+		}
+	},
+	"GrantPermissionGroups": {
+		"globalblock": "administration"
+	},
+
 	"LogTypes": [
-		"globaluserblock"
+		"globalblock"
 	],
+	"LogNames": {
+		"globalblock": "globaluserblocking-logpage"
+	},
+	"LogHeaders": {
+		"globalblock": "globaluserblocking-logpagetext"
+	},
+	"LogActions": {
+		"globalblock/block": "globaluserblocking-block-logentry",
+		"globalblock/reblock": "globaluserblocking-reblock-logentry",
+		"globalblock/unblock": "globaluserblocking-unblock-logentry"
+	},
+	"ActionFilteredLogs": {
+		"globalblock": {
+			"block": [
+				"block"
+			],
+			"unblock": [
+				"unblock"
+			],
+			"reblock": [
+				"reblock"
+			]
+		}
+	},
 
 	"AutoloadNamespaces": {
 		"MediaWiki\\Extension\\GlobalUserBlocking\\": "src/"
 	},
+	"ServiceWiringFiles": [
+		"src/ServiceWiring.php"
+	],
 
 	"APIModules": {
 		"globaluserblock": {
@@ -45,15 +90,17 @@
 	},
 
 	"SpecialPages": {
-		"GlobalBlockUser": {
-			"class": "MediaWiki\\Extension\\GlobalUserBlocking\\SpecialPages\\SpecialGlobalBlockUser",
+		"GlobalBlock": {
+			"class": "MediaWiki\\Extension\\GlobalUserBlocking\\SpecialPages\\SpecialGlobalBlock",
 			"services": [
-				"BlockUserFactory",
-				"BlockUtils"
+				"BlockUtils",
+				"BlockPermissionCheckerFactory",
+				"GlobalUserBlocking.GlobalBlockStore",
+				"GlobalUserBlocking.GlobalBlockCommandFactory"
 			]
 		},
-		"GlobalBlockedUserList": {
-			"class": "MediaWiki\\Extension\\GlobalUserBlocking\\SpecialPages\\SpecialGlobalBlockedUserList",
+		"GlobalBlockList": {
+			"class": "MediaWiki\\Extension\\GlobalUserBlocking\\SpecialPages\\SpecialGlobalBlockList",
 			"services": [
 				"BlockUtils",
 				"CommentFormatter"
@@ -72,13 +119,15 @@
 			"services": [
 				"PermissionManager",
 				"MainConfig",
-				"CommentFormatter"
+				"CommentFormatter",
+				"GlobalUserBlocking.GlobalBlockStore",
+				"UserFactory"
 			]
         }
     },
 
 	"config": {
-		"ApplyGlobalUserBlocks": {
+		"ApplyGlobalBlocks": {
 			"value": true
 		}
 	},

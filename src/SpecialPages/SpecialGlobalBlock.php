@@ -1,0 +1,610 @@
+<?php
+namespace MediaWiki\Extension\GlobalUserBlocking\SpecialPages;
+
+use MediaWiki\Block\BlockActionInfo;
+use MediaWiki\Block\BlockPermissionCheckerFactory;
+use MediaWiki\Block\BlockUtils;
+use MediaWiki\Block\DatabaseBlock;
+use MediaWiki\MainConfigNames;
+use MediaWiki\MediaWikiServices;
+use MediaWiki\User\UserIdentity;
+use MediaWiki\User\UserNamePrefixSearch;
+use MediaWiki\User\UserNameUtils;
+use FormSpecialPage;
+use TitleFormatter;
+use ErrorPageError;
+use SpecialBlock;
+use CommentStore;
+use Html;
+use HtmlArmor;
+use HTMLForm;
+use MediaWiki\Extension\GlobalUserBlocking\GlobalBlock;
+use MediaWiki\Extension\GlobalUserBlocking\GlobalBlockCommandFactory;
+use MediaWiki\Extension\GlobalUserBlocking\GlobalBlockStore;
+use Status;
+use SpecialPage;
+use Title;
+use User;
+
+class SpecialGlobalBlock extends FormSpecialPage {
+    /** @var BlockUtils */
+    private $blockUtils;
+
+    /** @var BlockPermissionCheckerFactory */
+    private $blockPermissionCheckerFactory;
+
+    /** @var GlobalBlockCommandFactory */
+    private $blockCommandFactory;
+
+    /** @var UserNameUtils */
+    private $userNameUtils;
+
+    /** @var UserNamePrefixSearch */
+    private $userNamePrefixSearch;
+
+    /** @var BlockActionInfo */
+    private $blockActionInfo;
+
+    /** @var TitleFormatter */
+    private $titleFormatter;
+
+    /** @var UserIdentity|string|null User to be blocked, as passed either by parameter
+     * (url?wpTarget=Foo) or as subpage (Special:Block/Foo)
+     */
+    protected $target;
+
+    /** @var int DatabaseBlock::TYPE_ constant */
+    protected $type;
+
+    /** @var User|string The previous block target */
+    protected $previousTarget;
+
+    /** @var bool Whether the previous submission of the form asked for HideUser */
+    protected $requestedHideUser;
+
+    /** @var bool */
+    protected $alreadyBlocked;
+
+    /** @var array */
+    protected $preErrors = [];
+
+    /** @var NamespaceInfo */
+    private $namespaceInfo;
+
+    /** @var GlobalBlockStore */
+    private $blockStore;
+
+    public function __construct(
+        BlockUtils $blockUtils,
+        BlockPermissionCheckerFactory $blockPermissionCheckerFactory,
+        GlobalBlockStore $blockStore,
+        GlobalBlockCommandFactory $blockCommandFactory
+    ) {
+        parent::__construct( 'GlobalBlock', 'globalblock' );
+
+        $this->blockUtils = $blockUtils;
+        $this->blockPermissionCheckerFactory = $blockPermissionCheckerFactory;
+        $this->blockStore = $blockStore;
+        $this->blockCommandFactory = $blockCommandFactory;
+    }
+
+    public function doesWrites() {
+        return true;
+    }
+
+    protected function getDisplayFormat() {
+        return 'ooui';
+    }
+
+    /**
+     * Checks that the user can unblock themselves if they are trying to do so
+     *
+     * @param User $user
+     * @throws ErrorPageError
+     */
+    protected function checkExecutePermissions( User $user ) {
+        parent::checkExecutePermissions( $user );
+        $status = $this->blockPermissionCheckerFactory->newBlockPermissionChecker( $this->target, $user )
+            ->checkBlockPermissions();
+        if ( $status !== true ) {
+            throw new ErrorPageError( 'badaccess', $status );
+        }
+    }
+
+    /**
+     * We allow certain special cases where user is blocked
+     *
+     * @return bool
+     */
+    public function requiresUnblock() {
+        return false;
+    }
+
+    /**
+     * Handle some magic here
+     *
+     * @param string $par
+     */
+    protected function setParameter( $par ) {
+        # Extract variables from the request.  Try not to get into a situation where we
+        # need to extract *every* variable from the form just for processing here, but
+        # there are legitimate uses for some variables
+        $request = $this->getRequest();
+        list( $this->target, $this->type ) = SpecialBlock::getTargetAndType( $par, $request );
+        if ( $this->target instanceof UserIdentity ) {
+            # Set the 'relevant user' in the skin, so it displays links like Contributions,
+            # User logs, UserRights, etc.
+            $this->getSkin()->setRelevantUser( $this->target );
+        }
+
+        list( $this->previousTarget, /*...*/ ) = $this->blockUtils
+            ->parseBlockTarget( $request->getVal( 'wpPreviousTarget' ) );
+        $this->requestedHideUser = $request->getBool( 'wpHideUser' );
+    }
+
+    /**
+     * Customizes the HTMLForm a bit
+     *
+     * @param HTMLForm $form
+     */
+    protected function alterForm( HTMLForm $form ) {
+        $form->setHeaderHtml( '' );
+        $form->setSubmitDestructive();
+
+        $msg = $this->alreadyBlocked ? 'ipb-change-block' : 'ipbsubmit';
+        $form->setSubmitTextMsg( $msg );
+
+        # Don't need to do anything if the form has been posted
+        if ( !$this->getRequest()->wasPosted() && $this->preErrors ) {
+            if ( $this->preErrors ) {
+                # Mimic error messages normally generated by the form
+                $form->addHeaderHtml( (string)new \OOUI\FieldLayout(
+                    new \OOUI\Widget( [] ),
+                    [
+                        'align' => 'top',
+                        'errors' => array_map( function ( $errMsg ) {
+                            return new \OOUI\HtmlSnippet( $this->msg( ...$errMsg )->parse() );
+                        }, $this->preErrors ),
+                    ]
+                ) );
+            }
+        }
+    }
+
+    /**
+     * Add header elements like block log entries, etc.
+     * @return string
+     */
+    protected function preHtml() {
+        $this->getOutput()->addModuleStyles( [
+            'mediawiki.widgets.TagMultiselectWidget.styles',
+            'mediawiki.special',
+        ] );
+        $this->getOutput()->addModules( [ 'mediawiki.special.block' ] );
+
+        $blockCIDRLimit = $this->getConfig()->get( MainConfigNames::BlockCIDRLimit );
+        $text = $this->msg( 'blockiptext', $blockCIDRLimit['IPv4'], $blockCIDRLimit['IPv6'] )->parse();
+
+        $otherBlockMessages = [];
+        if ( $this->target !== null ) {
+            $targetName = $this->target;
+            if ( $this->target instanceof UserIdentity ) {
+                $targetName = $this->target->getName();
+            }
+            $this->getHookRunner()->onOtherBlockLogLink( $otherBlockMessages, $targetName );
+
+            if ( count( $otherBlockMessages ) ) {
+                $s = Html::rawElement(
+                    'h2',
+                    [],
+                    $this->msg( 'ipb-otherblocks-header', count( $otherBlockMessages ) )->parse()
+                ) . "\n";
+
+                $list = '';
+
+                foreach ( $otherBlockMessages as $link ) {
+                    $list .= Html::rawElement( 'li', [], $link ) . "\n";
+                }
+
+                $s .= Html::rawElement(
+                    'ul',
+                    [ 'class' => 'mw-blockip-alreadyblocked' ],
+                    $list
+                ) . "\n";
+
+                $text .= $s;
+            }
+        }
+
+        return $text;
+    }
+
+    /**
+     * Get the HTMLForm descriptor array for the block form
+     * @return array
+     */
+    protected function getFormFields() {
+        $conf = $this->getConfig();
+        $blockAllowsUTEdit = $conf->get( MainConfigNames::BlockAllowsUTEdit );
+
+        $this->getOutput()->enableOOUI();
+
+        $user = $this->getUser();
+
+        $suggestedDurations = SpecialBlock::getSuggestedDurations();
+
+        $a = [];
+
+        $a['Target'] = [
+            'type' => 'user',
+            'ipallowed' => true,
+            'iprange' => true,
+            'id' => 'mw-bi-target',
+            'size' => '45',
+            'autofocus' => true,
+            'required' => true,
+            'placeholder' => $this->msg( 'block-target-placeholder' )->text(),
+            'validation-callback' => function ( $value, $alldata, $form ) {
+                $status = $this->blockUtils->validateTarget( $value );
+                if ( !$status->isOK() ) {
+                    $errors = $status->getErrorsArray();
+
+                    return $form->msg( ...$errors[0] );
+                }
+                return true;
+            },
+            'section' => 'target',
+        ];
+
+        $a['CreateAccount'] = [
+            'type' => 'check',
+            'cssclass' => 'mw-block-restriction',
+            'label-message' => 'ipbcreateaccount',
+            'default' => true,
+            'section' => 'details',
+        ];
+
+        if ( $this->blockPermissionCheckerFactory
+            ->newBlockPermissionChecker( null, $user )
+            ->checkEmailPermissions()
+        ) {
+            $a['DisableEmail'] = [
+                'type' => 'check',
+                'cssclass' => 'mw-block-restriction',
+                'label-message' => 'ipbemailban',
+                'section' => 'details',
+            ];
+        }
+
+        if ( $blockAllowsUTEdit ) {
+            $a['DisableUTEdit'] = [
+                'type' => 'check',
+                'cssclass' => 'mw-block-restriction',
+                'label-message' => 'ipb-disableusertalk',
+                'default' => false,
+                'section' => 'details',
+            ];
+        }
+
+        $defaultExpiry = $this->msg( 'ipb-default-expiry' )->inContentLanguage();
+        if ( $this->type === DatabaseBlock::TYPE_RANGE || $this->type === DatabaseBlock::TYPE_IP ) {
+            $defaultExpiryIP = $this->msg( 'ipb-default-expiry-ip' )->inContentLanguage();
+            if ( !$defaultExpiryIP->isDisabled() ) {
+                $defaultExpiry = $defaultExpiryIP;
+            }
+        }
+
+        $a['Expiry'] = [
+            'type' => 'expiry',
+            'required' => true,
+            'options' => $suggestedDurations,
+            'default' => $defaultExpiry->text(),
+            'section' => 'expiry',
+        ];
+
+        $a['Reason'] = [
+            'type' => 'selectandother',
+            // HTML maxlength uses "UTF-16 code units", which means that characters outside BMP
+            // (e.g. emojis) count for two each. This limit is overridden in JS to instead count
+            // Unicode codepoints.
+            'maxlength' => CommentStore::COMMENT_CHARACTER_LIMIT,
+            'maxlength-unit' => 'codepoints',
+            'options-message' => 'ipbreason-dropdown',
+            'section' => 'reason',
+        ];
+
+        # Watchlist their user page? (Only if user is logged in)
+        if ( $user->isRegistered() ) {
+            $a['Watch'] = [
+                'type' => 'check',
+                'label-message' => 'ipbwatchuser',
+                'section' => 'options',
+            ];
+        }
+
+        $a['HardBlock'] = [
+            'type' => 'check',
+            'label-message' => 'ipb-hardblock',
+            'default' => false,
+            'section' => 'options',
+        ];
+
+        # This is basically a copy of the Target field, but the user can't change it, so we
+        # can see if the warnings we maybe showed to the user before still apply
+        $a['PreviousTarget'] = [
+            'type' => 'hidden',
+            'default' => false,
+        ];
+
+        # We'll turn this into a checkbox if we need to
+        $a['Confirm'] = [
+            'type' => 'hidden',
+            'default' => '',
+            'label-message' => 'ipb-confirm',
+            'cssclass' => 'mw-block-confirm',
+        ];
+
+        $this->maybeAlterFormDefaults( $a );
+
+        return $a;
+    }
+
+    /**
+     * If the user has already been blocked with similar settings, load that block
+     * and change the defaults for the form fields to match the existing settings.
+     * @param array &$fields HTMLForm descriptor array
+     */
+    protected function maybeAlterFormDefaults( &$fields ) {
+        # This will be overwritten by request data
+        $fields['Target']['default'] = (string)$this->target;
+
+        if ( $this->target ) {
+            $status = $this->blockUtils->validateTarget( $this->target );
+            if ( !$status->isOK() ) {
+                $errors = $status->getErrorsArray();
+                $this->preErrors = array_merge( $this->preErrors, $errors );
+            }
+        }
+
+        # This won't be
+        $fields['PreviousTarget']['default'] = (string)$this->target;
+
+        $block = $this->blockStore->loadFromTarget( $this->target );
+
+        // Populate fields if there is a block that is not an autoblock; if it is a range
+        // block, only populate the fields if the range is the same as $this->target
+        if ( $block instanceof GlobalBlock
+            && ( $this->type != DatabaseBlock::TYPE_RANGE
+                || ( $this->target && $block->isBlocking( $this->target ) ) )
+        ) {
+            $fields['HardBlock']['default'] = $block->isHardblock();
+            $fields['CreateAccount']['default'] = $block->isCreateAccountBlocked();
+
+            if ( isset( $fields['DisableEmail'] ) ) {
+                $fields['DisableEmail']['default'] = $block->isEmailBlocked();
+            }
+
+            if ( isset( $fields['HideUser'] ) ) {
+                $fields['HideUser']['default'] = $block->getHideName();
+            }
+
+            if ( isset( $fields['DisableUTEdit'] ) ) {
+                $fields['DisableUTEdit']['default'] = !$block->isUsertalkEditAllowed();
+            }
+
+            // If the username was hidden (ipb_deleted == 1), don't show the reason
+            // unless this user also has rights to hideuser: T37839
+            if ( !$block->getHideName() || $this->getAuthority()->isAllowed( 'hideuser' ) ) {
+                $fields['Reason']['default'] = $block->getReasonComment()->text;
+            } else {
+                $fields['Reason']['default'] = '';
+            }
+
+            if ( $this->getRequest()->wasPosted() ) {
+                # Ok, so we got a POST submission asking us to reblock a user.  So show the
+                # confirm checkbox; the user will only see it if they haven't previously
+                $fields['Confirm']['type'] = 'check';
+            } else {
+                # We got a target, but it wasn't a POST request, so the user must have gone
+                # to a link like [[Special:Block/User]].  We don't need to show the checkbox
+                # as long as they go ahead and block *that* user
+                $fields['Confirm']['default'] = 1;
+            }
+
+            if ( $block->getExpiry() == 'infinity' ) {
+                $fields['Expiry']['default'] = 'infinite';
+            } else {
+                $fields['Expiry']['default'] = wfTimestamp( TS_RFC2822, $block->getExpiry() );
+            }
+
+            $this->alreadyBlocked = true;
+            $this->preErrors[] = [ 'ipb-needreblock', wfEscapeWikiText( $block->getTargetName() ) ];
+        }
+
+        if ( $this->alreadyBlocked || $this->getRequest()->wasPosted()
+            || $this->getRequest()->getCheck( 'wpCreateAccount' )
+        ) {
+            $this->getOutput()->addJsConfigVars( 'wgCreateAccountDirty', true );
+        }
+
+        # We always need confirmation to do HideUser
+        if ( $this->requestedHideUser ) {
+            $fields['Confirm']['type'] = 'check';
+            unset( $fields['Confirm']['default'] );
+            $this->preErrors[] = [ 'ipb-confirmhideuser', 'ipb-confirmaction' ];
+        }
+
+        # Or if the user is trying to block themselves
+        if ( (string)$this->target === $this->getUser()->getName() ) {
+            $fields['Confirm']['type'] = 'check';
+            unset( $fields['Confirm']['default'] );
+            $this->preErrors[] = [ 'ipb-blockingself', 'ipb-confirmaction' ];
+        }
+    }
+
+    /** @inheritDoc */
+    protected function postHtml() {
+        $links = [];
+
+        $this->getOutput()->addModuleStyles( 'mediawiki.special' );
+
+        $linkRenderer = $this->getLinkRenderer();
+        # Link to the user's contributions, if applicable
+        if ( $this->target instanceof UserIdentity ) {
+            $contribsPage = SpecialPage::getTitleFor( 'Contributions', $this->target->getName() );
+            $links[] = $linkRenderer->makeLink(
+                $contribsPage,
+                $this->msg( 'ipb-blocklist-contribs', $this->target->getName() )->text()
+            );
+        }
+
+        # Link to unblock the specified user, or to a blank unblock form
+        if ( $this->target instanceof UserIdentity ) {
+            $message = $this->msg(
+                'ipb-unblock-addr',
+                wfEscapeWikiText( $this->target->getName() )
+            )->parse();
+            $list = SpecialPage::getTitleFor( 'GlobalUnblock', $this->target->getName() );
+        } else {
+            $message = $this->msg( 'ipb-unblock' )->parse();
+            $list = SpecialPage::getTitleFor( 'GlobalUnblock' );
+        }
+        $links[] = $linkRenderer->makeKnownLink(
+            $list,
+            new HtmlArmor( $message )
+        );
+
+        # Link to the block list
+        $links[] = $linkRenderer->makeKnownLink(
+            SpecialPage::getTitleFor( 'GlobalBlockList' ),
+            $this->msg( 'ipb-blocklist' )->text()
+        );
+
+        # Link to edit the block dropdown reasons, if applicable
+        if ( $this->getAuthority()->isAllowed( 'editinterface' ) ) {
+            $links[] = $linkRenderer->makeKnownLink(
+                $this->msg( 'ipbreason-dropdown' )->inContentLanguage()->getTitle(),
+                $this->msg( 'ipb-edit-dropdown' )->text(),
+                [],
+                [ 'action' => 'edit' ]
+            );
+        }
+
+        $text = Html::rawElement(
+            'p',
+            [ 'class' => 'mw-ipb-conveniencelinks' ],
+            $this->getLanguage()->pipeList( $links )
+        );
+
+        return $text;
+    }
+
+    /** @inheritDoc */
+    public function onSubmit( array $data ) {
+        $performer = $this->getUser();
+
+        # This might have been a hidden field or a checkbox, so interesting data
+        # can come from it
+        $data['Confirm'] = !in_array( $data['Confirm'], [ '', '0', null, false ], true );
+
+        /** @var User $target */
+        list( $target, $type ) = $this->blockUtils->parseBlockTarget( $data['Target'] );
+        if ( $type == DatabaseBlock::TYPE_USER ) {
+            $user = $target;
+            $target = $user->getName();
+            $userId = $user->getId();
+
+            # Give admins a heads-up before they go and block themselves.  Much messier
+            # to do this for IPs, but it's pretty unlikely they'd ever get the 'block'
+            # permission anyway, although the code does allow for it.
+            # Note: Important to use $target instead of $data['Target']
+            # since both $data['PreviousTarget'] and $target are normalized
+            # but $data['target'] gets overridden by (non-normalized) request variable
+            # from previous request.
+            if ( $target === $performer->getUser()->getName() &&
+                ( $data['PreviousTarget'] !== $target || !$data['Confirm'] )
+            ) {
+                return [ 'ipb-blockingself', 'ipb-confirmaction' ];
+            }
+
+            if ( $data['HideUser'] && !$data['Confirm'] ) {
+                return [ 'ipb-confirmhideuser', 'ipb-confirmaction' ];
+            }
+        } elseif ( $type == DatabaseBlock::TYPE_RANGE ) {
+            $user = null;
+            $userId = 0;
+        } elseif ( $type == DatabaseBlock::TYPE_IP ) {
+            $user = null;
+            $target = $target->getName();
+            $userId = 0;
+        } else {
+            # This should have been caught in the form field validation
+            return [ 'badipaddress' ];
+        }
+
+        // Reason, to be passed to the block object. For default values of reason, see HTMLSelectAndOtherField::getDefault
+        $blockReason = $data['Reason'][0] ?? '';
+
+        $blockOptions = [
+            'isCreateAccountBlocked' => $data['CreateAccount'],
+            'isHardBlock' => $data['HardBlock']
+        ];
+
+        if ( isset( $data['DisableUTEdit'] ) ) {
+            $blockOptions['isUserTalkEditBlocked'] = $data['DisableUTEdit'];
+        }
+        if ( isset( $data['DisableEmail'] ) ) {
+            $blockOptions['isEmailBlocked'] = $data['DisableEmail'];
+        }
+
+        // This handles validation too...
+        $globalBlock = $this->blockCommandFactory->newPlacer(
+            $target,
+            $performer,
+            $data['Expiry'],
+            $blockReason,
+            $blockOptions
+        );
+
+        # Indicates whether the user is confirming the block and is aware of
+        # the conflict (did not change the block target in the meantime)
+        $blockNotConfirmed = !$data['Confirm'] || ( array_key_exists( 'PreviousTarget', $data )
+            && $data['PreviousTarget'] !== $target );
+
+        $status = $globalBlock->placeBlock( !$blockNotConfirmed );
+        if ( !$status->isOK() ) {
+            // Show the error message(s) to the user if an error occurred.
+            return Status::wrap( $status );
+        }
+
+        if (
+            // Can't watch a rangeblock
+            $type != GlobalBlock::TYPE_RANGE
+
+            // Technically a wiki can be configured to allow anonymous users to place blocks,
+            // in which case the 'Watch' field isn't included in the form shown, and we should
+            // not try to access it.
+            && array_key_exists( 'Watch', $data )
+            && $data['Watch']
+        ) {
+            MediaWikiServices::getInstance()->getWatchlistManager()->addWatchIgnoringRights(
+                $performer->getUser(),
+                Title::makeTitle( NS_USER, $target )
+            );
+        }
+
+        return true;
+    }
+
+    /** @inheritDoc */
+    public function onSuccess() {
+        $out = $this->getOutput();
+        $out->setPageTitle( $this->msg( 'blockipsuccesssub' ) );
+        $out->addWikiMsg( 'blockipsuccesstext', wfEscapeWikiText( $this->target ) );
+    }
+
+    /** @inheritDoc */
+    protected function getGroupName() {
+        return 'users';
+    }
+}

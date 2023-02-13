@@ -1,7 +1,7 @@
 [
 	{
 		"name": "global_user_blocks",
-		"comment": "Global blocks against user accounts. This should be a shared table.",
+		"comment": "Global blocks against user accounts and IPs. This should be a shared table.",
 		"columns": [
 			{
 				"name": "gub_id",
@@ -14,8 +14,8 @@
 				}
 			},
 			{
-				"name": "gub_target",
-				"comment": "Blocked IP address in dotted-quad form or user name.",
+				"name": "gub_target_address",
+				"comment": "Blocked user name or IP address in dotted-quad form or nothing.",
 				"type": "blob",
 				"options": {
 					"notnull": true,
@@ -23,7 +23,7 @@
 				}
 			},
 			{
-				"name": "gub_central_user",
+				"name": "gub_target_central_id",
 				"comment": "Blocked central user ID.",
 				"type": "integer",
 				"options": {
@@ -33,11 +33,20 @@
 				}
 			},
 			{
-				"name": "gub_by_central_user",
+				"name": "gub_performer_central_id",
 				"comment": "Central ID of the user who made the block.",
 				"type": "bigint",
 				"options": {
 					"unsigned": true,
+					"notnull": true
+				}
+			},
+			{
+				"name": "gub_wiki_id",
+				"type": "binary",
+				"options": {
+					"unsigned": true,
+					"length": 255,
 					"notnull": true
 				}
 			},
@@ -60,18 +69,8 @@
 				}
 			},
 			{
-				"name": "gub_auto",
-				"comment": "Indicates that the IP address was banned because a banned user accessed a page through it. If this is 1, gub_target will be hidden, and the block identified by block ID number.",
-				"type": "mwtinyint",
-				"options": {
-					"notnull": true,
-					"length": 1,
-					"default": 0
-				}
-			},
-			{
 				"name": "gub_anon_only",
-				"comment": "If set to 1, block applies only to logged-out users",
+				"comment": "If set to 1, block applies only to logged-out users.",
 				"type": "mwtinyint",
 				"options": {
 					"notnull": true,
@@ -81,17 +80,7 @@
 			},
 			{
 				"name": "gub_create_account",
-				"comment": "Block prevents account creation from matching IP addresses",
-				"type": "mwtinyint",
-				"options": {
-					"notnull": true,
-					"length": 1,
-					"default": 1
-				}
-			},
-			{
-				"name": "gub_enable_autoblock",
-				"comment": "Block triggers autoblocks",
+				"comment": "Block prevents account creation from matching IP addresses.",
 				"type": "mwtinyint",
 				"options": {
 					"notnull": true,
@@ -101,7 +90,7 @@
 			},
 			{
 				"name": "gub_expiry",
-				"comment": "Time at which the block will expire. May be \"infinity\"",
+				"comment": "Time at which the block will expire. May be \"infinity\".",
 				"type": "mwtimestamp",
 				"options": {
 					"notnull": true,
@@ -111,8 +100,26 @@
 				}
 			},
 			{
+				"name": "gub_range_start",
+				"comment": "Start of an address range, in hexadecimal size chosen to allow IPv6.",
+				"type": "blob",
+				"options": {
+					"notnull": true,
+					"length": 255
+				}
+			},
+			{
+				"name": "gub_range_end",
+				"comment": "End of an address range, in hexadecimal size chosen to allow IPv6.",
+				"type": "blob",
+				"options": {
+					"notnull": true,
+					"length": 255
+				}
+			},
+			{
 				"name": "gub_deleted",
-				"comment": "Flag for entries hidden from users and sysops",
+				"comment": "Flag for entries hidden from users and sysops.",
 				"type": "mwtinyint",
 				"options": {
 					"notnull": true,
@@ -122,7 +129,7 @@
 			},
 			{
 				"name": "gub_block_email",
-				"comment": "Block prevents user from accessing Special:Emailuser",
+				"comment": "Block prevents user from accessing Special:Emailuser.",
 				"type": "mwtinyint",
 				"options": {
 					"notnull": true,
@@ -132,48 +139,37 @@
 			},
 			{
 				"name": "gub_allow_usertalk",
-				"comment": "Block allows user to edit their own talk page",
+				"comment": "Block allows user to edit their own talk page.",
 				"type": "mwtinyint",
 				"options": {
 					"notnull": true,
 					"length": 1,
 					"default": 0
 				}
-			},
-			{
-				"name": "gub_parent_block_id",
-				"comment": "ID of the block that caused this block to exist. Autoblocks set this to the original block so that the original block being deleted also deletes the autoblocks",
-				"type": "integer",
-				"options": {
-					"notnull": false,
-					"unsigned": true,
-					"default": null
-				}
 			}
 		],
 		"indexes": [
 			{
 				"name": "gub_target_unique",
-				"comment": "Unique index to support \"user already blocked\" messages. Any new options which prevent collisions should be included",
+				"comment": "Unique index to support \"user already blocked\" messages. Any new options which prevent collisions should be included.",
 				"columns": [
-					"gub_target",
-					"gub_central_user",
-					"gub_auto"
+					"gub_target_address",
+					"gub_target_central_id"
 				],
 				"unique": true,
 				"options": { "lengths": [ 255, null, null ] }
 			},
 			{
-				"name": "gub_central_user",
-				"comment": "For querying whether a logged-in user is blocked",
+				"name": "gub_target_central_id",
+				"comment": "For querying whether a logged-in user is blocked.",
 				"columns": [
-					"gub_central_user"
+					"gub_target_central_id"
 				],
 				"unique": false
 			},
 			{
 				"name": "gub_timestamp",
-				"comment": "Index for Special:GlobalBlockedUserList",
+				"comment": "Index for Special:GlobalBlockedUserList.",
 				"columns": [
 					"gub_timestamp"
 				],
@@ -184,14 +180,6 @@
 				"comment": "Index for table pruning",
 				"columns": [
 					"gub_expiry"
-				],
-				"unique": false
-			},
-			{
-				"name": "gub_parent_block_id",
-				"comment": "Index for removing autoblocks when a parent block is removed",
-				"columns": [
-					"gub_parent_block_id"
 				],
 				"unique": false
 			}
