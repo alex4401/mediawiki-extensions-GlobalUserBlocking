@@ -219,7 +219,7 @@ class GlobalBlockStore {
     public function loadListFromTarget( $specificTarget, $vagueTarget = null, $fromPrimary = false ) {
         list( $target, $type ) = MediaWikiServices::getInstance()->getService( GlobalBlockUtils::SERVICE_NAME )
             ->parseBlockTarget( $specificTarget );
-        if ( $type == GlobalBlock::TYPE_ID ) {
+        if ( $type == GlobalBlock::TYPE_ID || $type == GlobalBlock::TYPE_AUTO ) {
             $block = $this->loadFromID( $target );
             return $block ? [ $block ] : [];
         } elseif ( $target === null && $vagueTarget == '' ) {

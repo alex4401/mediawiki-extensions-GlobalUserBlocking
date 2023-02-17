@@ -113,19 +113,20 @@ class SpecialGlobalUnblock extends SpecialPage {
 
         if ( $form->show() ) {
             switch ( $this->type ) {
-                case DatabaseBlock::TYPE_IP:
+                case GlobalBlock::TYPE_IP:
                     // @phan-suppress-next-line PhanTypeMismatchArgumentNullable target is set when type is set
                     $out->addWikiMsg( 'unblocked-ip', wfEscapeWikiText( $this->target ) );
                     break;
-                case DatabaseBlock::TYPE_USER:
+                case GlobalBlock::TYPE_USER:
                     // @phan-suppress-next-line PhanTypeMismatchArgumentNullable target is set when type is set
                     $out->addWikiMsg( 'unblocked', wfEscapeWikiText( $this->target ) );
                     break;
-                case DatabaseBlock::TYPE_RANGE:
+                case GlobalBlock::TYPE_RANGE:
                     // @phan-suppress-next-line PhanTypeMismatchArgumentNullable target is set when type is set
                     $out->addWikiMsg( 'unblocked-range', wfEscapeWikiText( $this->target ) );
                     break;
-                case DatabaseBlock::TYPE_ID:
+                case GlobalBlock::TYPE_ID:
+                case GlobalBlock::TYPE_AUTO:
                     // @phan-suppress-next-line PhanTypeMismatchArgumentNullable target is set when type is set
                     $out->addWikiMsg( 'unblocked-id', wfEscapeWikiText( $this->target ) );
                     break;
@@ -140,7 +141,7 @@ class SpecialGlobalUnblock extends SpecialPage {
      *
      * @param string|null $par Subpage parameter
      * @param WebRequest $request
-     * @return array [ UserIdentity|string|null, DatabaseBlock::TYPE_ constant|null ]
+     * @return array [ UserIdentity|string|null, GlobalBlock::TYPE_ constant|null ]
      * @phan-return array{0:UserIdentity|string|null,1:int|null}
      */
     private function getTargetAndType( ?string $par, WebRequest $request ) {
