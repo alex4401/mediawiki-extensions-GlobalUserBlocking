@@ -496,7 +496,8 @@ class GlobalBlockStore {
             'gub_target_address'       => $block->getType() != GlobalBlock::TYPE_USER ? $block->getTargetName() : '',
             'gub_target_central_id'    => $block->getTargetUserCentralId() ?? 0,
             'gub_performer_central_id' => $block->getBlockerCentralId(),
-            'gub_wiki_id'              => $block->getWikiId() || WikiMap::getCurrentWikiId(),
+            'gub_wiki_id'              => $block->getWikiId() !== GlobalBlock::LOCAL ? $block->getWikiId()
+                : WikiMap::getCurrentWikiId(),
             'gub_reason'               => $block->getReasonComment()->text,
             'gub_timestamp'            => $dbw->timestamp( $block->getTimestamp() ),
             'gub_anon_only'            => !$block->isHardblock(),
