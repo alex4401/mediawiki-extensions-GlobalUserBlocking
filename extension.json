@@ -59,6 +59,11 @@
 		"globalblock/reblock": "globaluserblocking-reblock-logentry",
 		"globalblock/unblock": "globaluserblocking-unblock-logentry"
 	},
+	"LogActionsHandlers": {
+		"globalblock/block": "BlockLogFormatter",
+		"globalblock/reblock": "BlockLogFormatter",
+		"globalblock/unblock": "BlockLogFormatter"
+	},
 	"ActionFilteredLogs": {
 		"globalblock": {
 			"block": [
