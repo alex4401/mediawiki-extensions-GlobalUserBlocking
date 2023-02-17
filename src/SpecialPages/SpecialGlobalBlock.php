@@ -384,10 +384,6 @@ class SpecialGlobalBlock extends FormSpecialPage {
                 $fields['DisableEmail']['default'] = $block->isEmailBlocked();
             }
 
-            if ( isset( $fields['HideUser'] ) ) {
-                $fields['HideUser']['default'] = $block->getHideName();
-            }
-
             if ( isset( $fields['DisableUTEdit'] ) ) {
                 $fields['DisableUTEdit']['default'] = !$block->isUsertalkEditAllowed();
             }
@@ -525,10 +521,6 @@ class SpecialGlobalBlock extends FormSpecialPage {
                 ( $data['PreviousTarget'] !== $target || !$data['Confirm'] )
             ) {
                 return [ 'ipb-blockingself', 'ipb-confirmaction' ];
-            }
-
-            if ( $data['HideUser'] && !$data['Confirm'] ) {
-                return [ 'ipb-confirmhideuser', 'ipb-confirmaction' ];
             }
         } elseif ( $type == DatabaseBlock::TYPE_RANGE ) {
             $user = null;

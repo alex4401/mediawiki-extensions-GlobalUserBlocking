@@ -381,12 +381,6 @@ class GlobalBlockPlacer {
             }
         }
 
-        // Set *_deleted fields if requested
-        if ( $this->isHideUser ) {
-            // This should only be the case of $this->target is a user, so we can safely call ->getId()
-            RevisionDeleteUser::suppressUserName( $this->target->getName(), $this->target->getId() );
-        }
-
         $this->hookRunner->onBlockIpComplete( $block, $legacyUser, $priorBlock );
 
         // GlobalBlock constructor sanitizes certain block options on insert
