@@ -18,6 +18,7 @@ use Wikimedia\Rdbms\IDatabase;
 use Wikimedia\Rdbms\ILoadBalancer;
 
 class GlobalBlockStore {
+    public const SERVICE_NAME = 'GlobalUserBlocking.GlobalBlockStore';
 
     /** @var ServiceOptions */
     private $options;

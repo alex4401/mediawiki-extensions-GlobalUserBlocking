@@ -12,6 +12,8 @@ use MediaWiki\User\UserIdentity;
 use Psr\Log\LoggerInterface;
 
 class GlobalBlockCommandFactory {
+    public const SERVICE_NAME = 'GlobalUserBlocking.GlobalBlockCommandFactory';
+
     /**
      * @var BlockPermissionCheckerFactory
      */

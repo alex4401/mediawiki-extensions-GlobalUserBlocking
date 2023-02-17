@@ -22,7 +22,7 @@ return [
             $services->getUserNameUtils()
         );
     },
-    'GlobalUserBlocking.GlobalBlockStore' => static function (
+    GlobalBlockStore::SERVICE_NAME => static function (
         MediaWikiServices $services
     ): GlobalBlockStore {
         return new GlobalBlockStore(
@@ -36,7 +36,7 @@ return [
             $services->getUserFactory()
         );
     },
-    'GlobalUserBlocking.GlobalBlockCommandFactory' => static function (
+    GlobalBlockCommandFactory::SERVICE_NAME => static function (
         MediaWikiServices $services
     ): GlobalBlockCommandFactory {
         return new GlobalBlockCommandFactory(
@@ -47,7 +47,7 @@ return [
             $services->getHookContainer(),
             $services->getBlockPermissionCheckerFactory(),
             $services->getService( GlobalBlockUtils::SERVICE_NAME ),
-            $services->getService( 'GlobalUserBlocking.GlobalBlockStore' ),
+            $services->getService( GlobalBlockStore::SERVICE_NAME ),
             $services->getUserFactory(),
             $services->getUserEditTracker(),
             LoggerFactory::getInstance( 'GlobalBlockCommandFactory' )
