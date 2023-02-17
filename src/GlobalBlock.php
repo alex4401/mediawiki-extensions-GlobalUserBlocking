@@ -67,8 +67,12 @@ class GlobalBlock extends AbstractBlock {
      * @return GlobalBlock
      */
     public static function newFromRow( $row, $db ) {
+        $target = $row->gub_target_address;
+        if ( $target === '' ) {
+            $target = (int)$row->gub_target_central_id;
+        }
         $block = new GlobalBlock( [
-            'target'          => (int)$row->gub_target_central_id || $row->gub_target_address,
+            'target'          => $target,
             'by'              => (int)$row->gub_performer_central_id,
             'wiki'            => $row->gub_wiki_id,
             'reason'          => $row->gub_reason,
