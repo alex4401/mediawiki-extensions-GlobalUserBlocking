@@ -93,7 +93,7 @@
 		"GlobalBlock": {
 			"class": "MediaWiki\\Extension\\GlobalUserBlocking\\SpecialPages\\SpecialGlobalBlock",
 			"services": [
-				"BlockUtils",
+				"GlobalUserBlocking.GlobalBlockUtils",
 				"BlockPermissionCheckerFactory",
 				"GlobalUserBlocking.GlobalBlockStore",
 				"GlobalUserBlocking.GlobalBlockCommandFactory"
@@ -104,7 +104,7 @@
 			"services": [
 				"GlobalUserBlocking.GlobalBlockCommandFactory",
 				"GlobalUserBlocking.GlobalBlockStore",
-				"BlockUtils",
+				"GlobalUserBlocking.GlobalBlockUtils",
 				"UserNameUtils",
 				"UserNamePrefixSearch"
 			]
@@ -112,7 +112,7 @@
 		"GlobalBlockList": {
 			"class": "MediaWiki\\Extension\\GlobalUserBlocking\\SpecialPages\\SpecialGlobalBlockList",
 			"services": [
-				"BlockUtils",
+				"GlobalUserBlocking.GlobalBlockUtils",
 				"CommentFormatter"
 			]
 		}

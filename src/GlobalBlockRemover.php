@@ -5,7 +5,6 @@ use ChangeTags;
 use ManualLogEntry;
 use MediaWiki\Block\BlockPermissionChecker;
 use MediaWiki\Block\BlockPermissionCheckerFactory;
-use MediaWiki\Block\BlockUtils;
 use MediaWiki\HookContainer\HookContainer;
 use MediaWiki\HookContainer\HookRunner;
 use MediaWiki\Permissions\Authority;
@@ -25,7 +24,7 @@ class GlobalBlockRemover {
     /** @var GlobalBlockStore */
     private $blockStore;
 
-    /** @var BlockUtils */
+    /** @var GlobalBlockUtils */
     private $blockUtils;
 
     /** @var UserFactory */
@@ -55,7 +54,7 @@ class GlobalBlockRemover {
     /**
      * @param BlockPermissionCheckerFactory $blockPermissionCheckerFactory
      * @param GlobalBlockStore $blockStore
-     * @param BlockUtils $blockUtils
+     * @param GlobalBlockUtils $blockUtils
      * @param UserFactory $userFactory
      * @param HookContainer $hookContainer
      * @param UserIdentity|string $target
@@ -66,7 +65,7 @@ class GlobalBlockRemover {
     public function __construct(
         BlockPermissionCheckerFactory $blockPermissionCheckerFactory,
         GlobalBlockStore $blockStore,
-        BlockUtils $blockUtils,
+        GlobalBlockUtils $blockUtils,
         UserFactory $userFactory,
         HookContainer $hookContainer,
         $target,

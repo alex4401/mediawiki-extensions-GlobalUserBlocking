@@ -1,6 +1,7 @@
 <?php
 namespace MediaWiki\Extension\GlobalUserBlocking\SpecialPages;
 
+use CommentStore;
 use Html;
 use IContextSource;
 use IndexPager;
@@ -14,6 +15,7 @@ use MediaWiki\Block\Restriction\PageRestriction;
 use MediaWiki\Block\Restriction\Restriction;
 use MediaWiki\Cache\LinkBatchFactory;
 use MediaWiki\CommentFormatter\RowCommentFormatter;
+use MediaWiki\Extension\GlobalUserBlocking\GlobalBlockUtils;
 use MediaWiki\Linker\LinkRenderer;
 use MediaWiki\MainConfigNames;
 use MediaWiki\SpecialPage\SpecialPageFactory;
@@ -44,7 +46,7 @@ class GlobalBlockListPager extends TablePager {
     /** @var BlockRestrictionStore */
     private $blockRestrictionStore;
 
-    /** @var BlockUtils */
+    /** @var GlobalBlockUtils */
     private $blockUtils;
 
     /** @var CommentStore */
@@ -66,7 +68,7 @@ class GlobalBlockListPager extends TablePager {
      * @param IContextSource $context
      * @param BlockActionInfo $blockActionInfo
      * @param BlockRestrictionStore $blockRestrictionStore
-     * @param BlockUtils $blockUtils
+     * @param GlobalBlockUtils $blockUtils
      * @param CommentStore $commentStore
      * @param LinkBatchFactory $linkBatchFactory
      * @param LinkRenderer $linkRenderer
@@ -79,7 +81,7 @@ class GlobalBlockListPager extends TablePager {
         IContextSource $context,
         BlockActionInfo $blockActionInfo,
         BlockRestrictionStore $blockRestrictionStore,
-        BlockUtils $blockUtils,
+        GlobalBlockUtils $blockUtils,
         CommentStore $commentStore,
         LinkBatchFactory $linkBatchFactory,
         LinkRenderer $linkRenderer,

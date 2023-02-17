@@ -198,9 +198,8 @@ class GlobalBlock extends AbstractBlock {
             $this->target = null;
             $this->type = null;
         } else {
-            list( $parsedTarget, $this->type ) = MediaWikiServices::getInstance()
-                ->getBlockUtils()
-                ->parseBlockTarget( $target );
+            list( $parsedTarget, $this->type ) = MediaWikiServices::getInstance()->getService( GlobalBlockUtils::SERVICE_NAME )
+                ->parseInternalBlockTarget( $target );
             $this->target = $parsedTarget;
         }
     }

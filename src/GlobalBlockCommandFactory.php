@@ -3,7 +3,6 @@
 namespace MediaWiki\Extension\GlobalUserBlocking;
 
 use MediaWiki\Block\BlockPermissionCheckerFactory;
-use MediaWiki\Block\BlockUtils;
 use MediaWiki\Config\ServiceOptions;
 use MediaWiki\HookContainer\HookContainer;
 use MediaWiki\Permissions\Authority;
@@ -18,7 +17,7 @@ class GlobalBlockCommandFactory {
      */
     private $blockPermissionCheckerFactory;
 
-    /** @var BlockUtils */
+    /** @var GlobalBlockUtils */
     private $blockUtils;
 
     /** @var HookContainer */
@@ -48,7 +47,7 @@ class GlobalBlockCommandFactory {
      * @param ServiceOptions $options
      * @param HookContainer $hookContainer
      * @param BlockPermissionCheckerFactory $blockPermissionCheckerFactory
-     * @param BlockUtils $blockUtils
+     * @param GlobalBlockUtils $blockUtils
      * @param GlobalBlockStore $blockStore
      * @param UserFactory $userFactory
      * @param UserEditTracker $userEditTracker
@@ -58,7 +57,7 @@ class GlobalBlockCommandFactory {
         ServiceOptions $options,
         HookContainer $hookContainer,
         BlockPermissionCheckerFactory $blockPermissionCheckerFactory,
-        BlockUtils $blockUtils,
+        GlobalBlockUtils $blockUtils,
         GlobalBlockStore $blockStore,
         UserFactory $userFactory,
         UserEditTracker $userEditTracker,

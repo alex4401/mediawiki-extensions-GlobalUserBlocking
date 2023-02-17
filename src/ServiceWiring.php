@@ -3,10 +3,25 @@
 use MediaWiki\Config\ServiceOptions;
 use MediaWiki\Extension\GlobalUserBlocking\GlobalBlockCommandFactory;
 use MediaWiki\Extension\GlobalUserBlocking\GlobalBlockStore;
+use MediaWiki\Extension\GlobalUserBlocking\GlobalBlockUtils;
 use MediaWiki\Logger\LoggerFactory;
 use MediaWiki\MediaWikiServices;
 
 return [
+    GlobalBlockUtils::SERVICE_NAME => static function (
+        MediaWikiServices $services
+    ): GlobalBlockUtils {
+        return new GlobalBlockUtils(
+            new ServiceOptions(
+                GlobalBlockUtils::CONSTRUCTOR_OPTIONS,
+                $services->getMainConfig()
+            ),
+            $services->getBlockUtils(),
+            $services->getCentralIdLookup(),
+            $services->getUserIdentityLookup(),
+            $services->getUserNameUtils()
+        );
+    },
     'GlobalUserBlocking.GlobalBlockStore' => static function (
         MediaWikiServices $services
     ): GlobalBlockStore {
@@ -31,7 +46,7 @@ return [
             ),
             $services->getHookContainer(),
             $services->getBlockPermissionCheckerFactory(),
-            $services->getBlockUtils(),
+            $services->getService( GlobalBlockUtils::SERVICE_NAME ),
             $services->getService( 'GlobalUserBlocking.GlobalBlockStore' ),
             $services->getUserFactory(),
             $services->getUserEditTracker(),

@@ -123,7 +123,8 @@ class GlobalBlockStore {
         # Be aware that the != '' check is explicit, since empty values will be
         # passed by some callers (T31116)
         if ( $vagueTarget != '' ) {
-            list( $target, $type ) = MediaWikiServices::getInstance()->getBlockUtils()->parseBlockTarget( $vagueTarget );
+            list( $target, $type ) = MediaWikiServices::getInstance()->getService( GlobalBlockUtils::SERVICE_NAME )
+                ->parseBlockTarget( $vagueTarget );
             switch ( $type ) {
                 case GlobalBlock::TYPE_USER:
                     $conds['gub_target_central_id'][] =
@@ -215,7 +216,8 @@ class GlobalBlockStore {
      * @return GlobalBlock[] Any relevant blocks
      */
     public function loadListFromTarget( $specificTarget, $vagueTarget = null, $fromPrimary = false ) {
-        list( $target, $type ) = MediaWikiServices::getInstance()->getBlockUtils()->parseBlockTarget( $specificTarget );
+        list( $target, $type ) = MediaWikiServices::getInstance()->getService( GlobalBlockUtils::SERVICE_NAME )
+            ->parseBlockTarget( $specificTarget );
         if ( $type == GlobalBlock::TYPE_ID ) {
             $block = $this->loadFromID( $target );
             return $block ? [ $block ] : [];

@@ -21,13 +21,14 @@ use HTMLForm;
 use MediaWiki\Extension\GlobalUserBlocking\GlobalBlock;
 use MediaWiki\Extension\GlobalUserBlocking\GlobalBlockCommandFactory;
 use MediaWiki\Extension\GlobalUserBlocking\GlobalBlockStore;
+use MediaWiki\Extension\GlobalUserBlocking\GlobalBlockUtils;
 use Status;
 use SpecialPage;
 use Title;
 use User;
 
 class SpecialGlobalBlock extends FormSpecialPage {
-    /** @var BlockUtils */
+    /** @var GlobalBlockUtils */
     private $blockUtils;
 
     /** @var BlockPermissionCheckerFactory */
@@ -75,7 +76,7 @@ class SpecialGlobalBlock extends FormSpecialPage {
     private $blockStore;
 
     public function __construct(
-        BlockUtils $blockUtils,
+        GlobalBlockUtils $blockUtils,
         BlockPermissionCheckerFactory $blockPermissionCheckerFactory,
         GlobalBlockStore $blockStore,
         GlobalBlockCommandFactory $blockCommandFactory
@@ -264,10 +265,7 @@ class SpecialGlobalBlock extends FormSpecialPage {
             'section' => 'details',
         ];
 
-        if ( $this->blockPermissionCheckerFactory
-            ->newBlockPermissionChecker( null, $user )
-            ->checkEmailPermissions()
-        ) {
+        if ( $this->blockPermissionCheckerFactory->newBlockPermissionChecker( null, $user )->checkEmailPermissions() ) {
             $a['DisableEmail'] = [
                 'type' => 'check',
                 'cssclass' => 'mw-block-restriction',

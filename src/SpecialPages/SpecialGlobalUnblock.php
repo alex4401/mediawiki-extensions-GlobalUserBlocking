@@ -3,7 +3,6 @@ namespace MediaWiki\Extension\GlobalUserBlocking\SpecialPages;
 
 use MediaWiki\Block\BlockActionInfo;
 use MediaWiki\Block\BlockPermissionCheckerFactory;
-use MediaWiki\Block\BlockUtils;
 use MediaWiki\Block\DatabaseBlock;
 use MediaWiki\MainConfigNames;
 use MediaWiki\MediaWikiServices;
@@ -21,6 +20,7 @@ use HTMLForm;
 use MediaWiki\Extension\GlobalUserBlocking\GlobalBlock;
 use MediaWiki\Extension\GlobalUserBlocking\GlobalBlockCommandFactory;
 use MediaWiki\Extension\GlobalUserBlocking\GlobalBlockStore;
+use MediaWiki\Extension\GlobalUserBlocking\GlobalBlockUtils;
 use Status;
 use SpecialPage;
 use Title;
@@ -43,7 +43,7 @@ class SpecialGlobalUnblock extends SpecialPage {
     /** @var GlobalBlockStore */
     private $blockStore;
 
-    /** @var BlockUtils */
+    /** @var GlobalBlockUtils */
     private $blockUtils;
 
     /** @var UserNameUtils */
@@ -55,14 +55,14 @@ class SpecialGlobalUnblock extends SpecialPage {
     /**
      * @param GlobalBlockCommandFactory $commandFactory
      * @param GlobalBlockStore $blockStore
-     * @param BlockUtils $blockUtils
+     * @param GlobalBlockUtils $blockUtils
      * @param UserNameUtils $userNameUtils
      * @param UserNamePrefixSearch $userNamePrefixSearch
      */
     public function __construct(
         GlobalBlockCommandFactory $commandFactory,
         GlobalBlockStore $blockStore,
-        BlockUtils $blockUtils,
+        GlobalBlockUtils $blockUtils,
         UserNameUtils $userNameUtils,
         UserNamePrefixSearch $userNamePrefixSearch
     ) {

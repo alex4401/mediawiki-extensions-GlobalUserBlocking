@@ -7,7 +7,6 @@ use ManualLogEntry;
 use MediaWiki\Block\BlockPermissionChecker;
 use MediaWiki\Block\BlockPermissionCheckerFactory;
 use MediaWiki\Block\BlockUser;
-use MediaWiki\Block\BlockUtils;
 use MediaWiki\Config\ServiceOptions;
 use MediaWiki\HookContainer\HookContainer;
 use MediaWiki\HookContainer\HookRunner;
@@ -33,7 +32,7 @@ class GlobalBlockPlacer {
      *
      * Target of the block
      *
-     * This is null in case BlockUtils::parseBlockTarget failed to parse the target.
+     * This is null in case GlobalBlockUtils::parseBlockTarget failed to parse the target.
      * Such case is detected in placeBlockUnsafe, by calling validateTarget from SpecialBlock.
      */
     private $target;
@@ -43,7 +42,7 @@ class GlobalBlockPlacer {
      *
      * One of AbstractBlock::TYPE_* constants
      *
-     * This will be -1 if BlockUtils::parseBlockTarget failed to parse the target.
+     * This will be -1 if GlobalBlockUtils::parseBlockTarget failed to parse the target.
      */
     private $targetType;
 
@@ -56,7 +55,7 @@ class GlobalBlockPlacer {
     /** @var BlockPermissionChecker */
     private $blockPermissionChecker;
 
-    /** @var BlockUtils */
+    /** @var GlobalBlockUtils */
     private $blockUtils;
 
     /** @var HookRunner */
@@ -129,7 +128,7 @@ class GlobalBlockPlacer {
      * @param ServiceOptions $options
      * @param GlobalBlockStore $blockStore
      * @param BlockPermissionCheckerFactory $blockPermissionCheckerFactory
-     * @param BlockUtils $blockUtils
+     * @param GlobalBlockUtils $blockUtils
      * @param HookContainer $hookContainer
      * @param UserFactory $userFactory
      * @param UserEditTracker $userEditTracker
@@ -151,7 +150,7 @@ class GlobalBlockPlacer {
         ServiceOptions $options,
         GlobalBlockStore $blockStore,
         BlockPermissionCheckerFactory $blockPermissionCheckerFactory,
-        BlockUtils $blockUtils,
+        GlobalBlockUtils $blockUtils,
         HookContainer $hookContainer,
         UserFactory $userFactory,
         UserEditTracker $userEditTracker,
@@ -176,7 +175,8 @@ class GlobalBlockPlacer {
 
         // Process block target
         list( $this->target, $rawTargetType ) = $this->blockUtils->parseBlockTarget( $target );
-        if ( $rawTargetType !== null ) { // Guard against invalid targets
+        if ( $rawTargetType !== null ) {
+            // Guard against invalid targets
             $this->targetType = $rawTargetType;
         } else {
             $this->targetType = -1;

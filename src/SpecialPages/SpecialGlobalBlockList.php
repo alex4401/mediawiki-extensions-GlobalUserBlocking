@@ -8,6 +8,7 @@ use MediaWiki\Block\BlockUtils;
 use MediaWiki\CommentFormatter\CommentFormatter;
 use MediaWiki\Extension\GlobalUserBlocking\GlobalBlock;
 use MediaWiki\Extension\GlobalUserBlocking\GlobalBlockStore;
+use MediaWiki\Extension\GlobalUserBlocking\GlobalBlockUtils;
 use MediaWiki\MediaWikiServices;
 use SpecialPage;
 use Wikimedia\IPUtils;
@@ -32,7 +33,7 @@ class SpecialGlobalBlockList extends SpecialPage {
     /** @var CommentStore */
     private $commentStore;
 
-    /** @var BlockUtils */
+    /** @var GlobalBlockUtils */
     private $blockUtils;
 
     /** @var BlockActionInfo */
@@ -46,7 +47,7 @@ class SpecialGlobalBlockList extends SpecialPage {
         BlockRestrictionStore $blockRestrictionStore,
         ILoadBalancer $loadBalancer,
         CommentStore $commentStore,
-        BlockUtils $blockUtils,
+        GlobalBlockUtils $blockUtils,
         BlockActionInfo $blockActionInfo
     ) {
         parent::__construct( 'GlobalBlockUserList' );
