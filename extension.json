@@ -99,6 +99,16 @@
 				"GlobalUserBlocking.GlobalBlockCommandFactory"
 			]
 		},
+		"GlobalUnblock": {
+			"class": "MediaWiki\\Extension\\GlobalUserBlocking\\SpecialPages\\SpecialGlobalUnblock",
+			"services": [
+				"GlobalUserBlocking.GlobalBlockCommandFactory",
+				"GlobalUserBlocking.GlobalBlockStore",
+				"BlockUtils",
+				"UserNameUtils",
+				"UserNamePrefixSearch"
+			]
+		},
 		"GlobalBlockList": {
 			"class": "MediaWiki\\Extension\\GlobalUserBlocking\\SpecialPages\\SpecialGlobalBlockList",
 			"services": [

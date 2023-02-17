@@ -117,4 +117,31 @@ class GlobalBlockCommandFactory {
             $tags
         );
     }
+
+    /**
+     * @param UserIdentity|string $target
+     * @param Authority $performer
+     * @param string $reason
+     * @param string[] $tags
+     *
+     * @return UnblockUser
+     */
+    public function newRemover(
+        $target,
+        Authority $performer,
+        string $reason,
+        array $tags = []
+    ): GlobalBlockRemover {
+        return new GlobalBlockRemover(
+            $this->blockPermissionCheckerFactory,
+            $this->blockStore,
+            $this->blockUtils,
+            $this->userFactory,
+            $this->hookContainer,
+            $target,
+            $performer,
+            $reason,
+            $tags
+        );
+    }
 }
