@@ -120,7 +120,8 @@
 				"LinkBatchFactory",
 				"DBLoadBalancer",
 				"CommentStore",
-				"GlobalUserBlocking.GlobalBlockUtils"
+				"GlobalUserBlocking.GlobalBlockUtils",
+				"CentralIdLookup"
 			]
 		}
 	},

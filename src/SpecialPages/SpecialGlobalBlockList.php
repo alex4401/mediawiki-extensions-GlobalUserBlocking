@@ -8,6 +8,7 @@ use HTMLForm;
 use MediaWiki\Block\BlockUtils;
 use MediaWiki\Cache\LinkBatchFactory;
 use MediaWiki\CommentFormatter\CommentFormatter;
+use MediaWiki\CommentFormatter\RowCommentFormatter;
 use MediaWiki\Extension\GlobalUserBlocking\GlobalBlock;
 use MediaWiki\Extension\GlobalUserBlocking\GlobalBlockStore;
 use MediaWiki\Extension\GlobalUserBlocking\GlobalBlockUtils;
@@ -35,18 +36,23 @@ class SpecialGlobalBlockList extends SpecialPage {
     /** @var GlobalBlockUtils */
     private $blockUtils;
 
+    /** @var CentralIdLookup */
+    private $centralIdLookup;
+
     public function __construct(
         LinkBatchFactory $linkBatchFactory,
         ILoadBalancer $loadBalancer,
         CommentStore $commentStore,
-        GlobalBlockUtils $blockUtils
+        GlobalBlockUtils $blockUtils,
+        CentralIdLookup $centralIdLookup
     ) {
-        parent::__construct( 'GlobalBlockUserList' );
+        parent::__construct( 'GlobalBlockList' );
 
         $this->linkBatchFactory = $linkBatchFactory;
         $this->loadBalancer = $loadBalancer;
         $this->commentStore = $commentStore;
         $this->blockUtils = $blockUtils;
+        $this->centralIdLookup = $centralIdLookup;
     }
 
     /**
@@ -58,6 +64,11 @@ class SpecialGlobalBlockList extends SpecialPage {
         $this->setHeaders();
         $this->outputHeader( 'globaluserblocking-list-intro' );
         $out->addModuleStyles( [ 'mediawiki.special' ] );
+
+        $request = $this->getRequest();
+        $par = $request->getVal( 'ip', $par ?? '' );
+        $this->target = trim( $request->getVal( 'wpTarget', $par ) );
+        $this->options = $request->getArray( 'wpOptions', [] );
 
         $out = $this->getOutput();
         $out->setPageTitle( $this->msg( 'globaluserblocking-list' ) );
@@ -100,7 +111,7 @@ class SpecialGlobalBlockList extends SpecialPage {
         $form = HTMLForm::factory( 'ooui', $fields, $this->getContext() );
         $form
             ->setMethod( 'get' )
-            ->setTitle( $this->getPageTitle() ) // Remove subpage
+            ->setTitle( $this->getPageTitle() )
             ->setFormIdentifier( 'blocklist' )
             ->setWrapperLegendMsg( 'ipblocklist-legend' )
             ->setSubmitTextMsg( 'ipblocklist-submit' )
@@ -109,7 +120,6 @@ class SpecialGlobalBlockList extends SpecialPage {
 
         $this->showList( $pager );
     }
-
 
     /**
      * Setup a new BlockListPager instance.
@@ -152,13 +162,13 @@ class SpecialGlobalBlockList extends SpecialPage {
 
         # Apply filters
         if ( in_array( 'userblocks', $this->options ) ) {
-            $conds['ipb_user'] = 0;
+            $conds['gub_target_central_id'] = 0;
         }
         if ( in_array( 'addressblocks', $this->options ) ) {
-            $conds[] = "ipb_user != 0 OR ipb_range_end > ipb_range_start";
+            $conds[] = "gub_target_address != 0 OR gub_range_end > gub_range_start";
         }
         if ( in_array( 'rangeblocks', $this->options ) ) {
-            $conds[] = "ipb_range_end = ipb_range_start";
+            $conds[] = "gub_range_end = gub_range_start";
         }
 
         $hideTemp = in_array( 'tempblocks', $this->options );
@@ -172,17 +182,15 @@ class SpecialGlobalBlockList extends SpecialPage {
             $conds[] = "gub_expiry != " . $db->addQuotes( $db->getInfinity() );
         }
 
-        return new BlockListPager(
+        return new GlobalBlockListPager(
             $this->getContext(),
-            $this->blockActionInfo,
-            $this->blockRestrictionStore,
             $this->blockUtils,
             $this->commentStore,
             $this->linkBatchFactory,
             $this->getLinkRenderer(),
             $this->loadBalancer,
-            $this->rowCommentFormatter,
             $this->getSpecialPageFactory(),
+            $this->centralIdLookup,
             $conds
         );
     }

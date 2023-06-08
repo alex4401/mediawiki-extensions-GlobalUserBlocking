@@ -1,6 +1,7 @@
 <?php
 namespace MediaWiki\Extension\GlobalUserBlocking\SpecialPages;
 
+use CentralIdLookup;
 use CommentStore;
 use Html;
 use IContextSource;
@@ -33,19 +34,6 @@ class GlobalBlockListPager extends TablePager {
 
     protected $conds;
 
-    /**
-     * Array of restrictions.
-     *
-     * @var Restriction[]
-     */
-    protected $restrictions = [];
-
-    /** @var BlockActionInfo */
-    private $blockActionInfo;
-
-    /** @var BlockRestrictionStore */
-    private $blockRestrictionStore;
-
     /** @var GlobalBlockUtils */
     private $blockUtils;
 
@@ -55,11 +43,11 @@ class GlobalBlockListPager extends TablePager {
     /** @var LinkBatchFactory */
     private $linkBatchFactory;
 
-    /** @var RowCommentFormatter */
-    private $rowCommentFormatter;
-
     /** @var SpecialPageFactory */
     private $specialPageFactory;
+
+    /** @var CentralIdLookup */
+    private $centralIdLookup;
 
     /** @var string[] */
     private $formattedComments = [];
@@ -73,32 +61,28 @@ class GlobalBlockListPager extends TablePager {
      * @param LinkBatchFactory $linkBatchFactory
      * @param LinkRenderer $linkRenderer
      * @param ILoadBalancer $loadBalancer
-     * @param RowCommentFormatter $rowCommentFormatter
      * @param SpecialPageFactory $specialPageFactory
+     * @param CentralIdLookup $centralIdLookup
      * @param array $conds
      */
     public function __construct(
         IContextSource $context,
-        BlockActionInfo $blockActionInfo,
-        BlockRestrictionStore $blockRestrictionStore,
         GlobalBlockUtils $blockUtils,
         CommentStore $commentStore,
         LinkBatchFactory $linkBatchFactory,
         LinkRenderer $linkRenderer,
         ILoadBalancer $loadBalancer,
-        RowCommentFormatter $rowCommentFormatter,
         SpecialPageFactory $specialPageFactory,
+        CentralIdLookup $centralIdLookup,
         $conds
     ) {
         $this->mDb = $loadBalancer->getConnection( ILoadBalancer::DB_REPLICA );
         parent::__construct( $context, $linkRenderer );
-        $this->blockActionInfo = $blockActionInfo;
-        $this->blockRestrictionStore = $blockRestrictionStore;
         $this->blockUtils = $blockUtils;
         $this->commentStore = $commentStore;
         $this->linkBatchFactory = $linkBatchFactory;
-        $this->rowCommentFormatter = $rowCommentFormatter;
         $this->specialPageFactory = $specialPageFactory;
+        $this->centralIdLookup = $centralIdLookup;
         $this->conds = $conds;
         $this->mDefaultDirection = IndexPager::DIR_DESCENDING;
     }
@@ -164,29 +148,31 @@ class GlobalBlockListPager extends TablePager {
                 $formatted = htmlspecialchars( $language->userTimeAndDate( $value, $this->getUser() ) );
                 break;
 
-            case 'ipb_target':
-                if ( $row->ipb_auto ) {
-                    $formatted = $this->msg( 'autoblockid', $row->ipb_id )->parse();
+            case 'gub_target_address':
+                $target = null;
+
+                if ( (int)$row->gub_target_central_id !== 0 ) {
+                    $target = $this->centralIdLookup->localUserFromCentralId( (int)$row->gub_target_central_id );
                 } else {
-                    list( $target, ) = $this->blockUtils->parseBlockTarget( $row->ipb_address );
+                    list( $target, ) = $this->blockUtils->parseBlockTarget( $row->gub_target_address );
+                }
 
-                    if ( is_string( $target ) ) {
-                        if ( IPUtils::isValidRange( $target ) ) {
-                            $target = User::newFromName( $target, false );
-                        } else {
-                            $formatted = $target;
-                        }
+                if ( is_string( $target ) ) {
+                    if ( IPUtils::isValidRange( $target ) ) {
+                        $target = User::newFromName( $target, false );
+                    } else {
+                        $formatted = $target;
                     }
+                }
 
-                    if ( $target instanceof UserIdentity ) {
-                        $formatted = Linker::userLink( $target->getId(), $target->getName() );
-                        $formatted .= Linker::userToolLinks(
-                            $target->getId(),
-                            $target->getName(),
-                            false,
-                            Linker::TOOL_LINKS_NOBLOCK
-                        );
-                    }
+                if ( $target instanceof UserIdentity ) {
+                    $formatted = Linker::userLink( $target->getId(), $target->getName() );
+                    $formatted .= Linker::userToolLinks(
+                        $target->getId(),
+                        $target->getName(),
+                        false,
+                        Linker::TOOL_LINKS_NOBLOCK
+                    );
                 }
                 break;
 
@@ -198,24 +184,20 @@ class GlobalBlockListPager extends TablePager {
                     $this->getUser()
                 ) );
                 if ( $this->getAuthority()->isAllowed( 'block' ) ) {
-                    $links = [];
-                    if ( $row->ipb_auto ) {
-                        $links[] = $linkRenderer->makeKnownLink(
-                            $this->specialPageFactory->getTitleForAlias( 'Unblock' ),
-                            $msg['unblocklink'],
-                            [],
-                            [ 'wpTarget' => "#{$row->ipb_id}" ]
-                        );
-                    } else {
-                        $links[] = $linkRenderer->makeKnownLink(
-                            $this->specialPageFactory->getTitleForAlias( 'Unblock/' . $row->ipb_address ),
-                            $msg['unblocklink']
-                        );
-                        $links[] = $linkRenderer->makeKnownLink(
-                            $this->specialPageFactory->getTitleForAlias( 'Block/' . $row->ipb_address ),
-                            $msg['change-blocklink']
-                        );
+                    $targetName = $row->gub_target_address;
+                    if ( (int)$row->gub_target_central_id !== 0 ) {
+                        $targetName = $this->centralIdLookup->nameFromCentralId( (int)$row->gub_target_central_id );
                     }
+
+                    $links = [];
+                    $links[] = $linkRenderer->makeKnownLink(
+                        $this->specialPageFactory->getTitleForAlias( 'GlobalUnblock/' . $targetName ),
+                        $msg['unblocklink']
+                    );
+                    $links[] = $linkRenderer->makeKnownLink(
+                        $this->specialPageFactory->getTitleForAlias( 'GlobalBlock/' . $targetName ),
+                        $msg['change-blocklink']
+                    );
                     $formatted .= ' ' . Html::rawElement(
                         'span',
                         [ 'class' => 'mw-blocklist-actions' ],
@@ -241,30 +223,31 @@ class GlobalBlockListPager extends TablePager {
                 }
                 break;
 
-            case 'ipb_by':
-                $formatted = Linker::userLink( (int)$value, $row->ipb_by_text );
-                $formatted .= Linker::userToolLinks( (int)$value, $row->ipb_by_text );
+            case 'gub_performer_central_id':
+                $userName = $this->centralIdLookup->nameFromCentralId( (int)$value );
+                $formatted = Linker::userLink( (int)$value, $userName );
+                $formatted .= Linker::userToolLinks( (int)$value, $userName );
                 break;
 
             case 'gub_reason':
-                $formatted = $this->formattedComments[$this->getResultOffset()];
+                $formatted = $row->gub_reason;
                 break;
 
             case 'gub_params':
                 $properties = [];
 
-                if ( $row->ipb_anon_only ) {
+                if ( $row->gub_anon_only ) {
                     $properties[] = htmlspecialchars( $msg['anononlyblock'] );
                 }
-                if ( $row->ipb_create_account ) {
+                if ( $row->gub_create_account ) {
                     $properties[] = htmlspecialchars( $msg['createaccountblock'] );
                 }
 
-                if ( $row->ipb_block_email ) {
+                if ( $row->gub_block_email ) {
                     $properties[] = htmlspecialchars( $msg['emailblock'] );
                 }
 
-                if ( !$row->ipb_allow_usertalk ) {
+                if ( !$row->gub_allow_usertalk ) {
                     $properties[] = htmlspecialchars( $msg['blocklist-nousertalk'] );
                 }
 
@@ -294,11 +277,11 @@ class GlobalBlockListPager extends TablePager {
             'tables' => [ 'global_user_blocks' ],
             'fields' => [
                 'gub_id',
-                'gub_address',
-                'gub_user',
-                'ipb_by' => 'ipblocks_by_actor.actor_user',
-                'ipb_by_text' => 'ipblocks_by_actor.actor_name',
+                'gub_target_address',
+                'gub_target_central_id',
+                'gub_performer_central_id',
                 'gub_timestamp',
+                'gub_reason',
                 'gub_anon_only',
                 'gub_create_account',
                 'gub_expiry',
@@ -348,20 +331,21 @@ class GlobalBlockListPager extends TablePager {
         $lb->setCaller( __METHOD__ );
 
         foreach ( $result as $row ) {
-            $lb->add( NS_USER, $row->ipb_address );
-            $lb->add( NS_USER_TALK, $row->ipb_address );
-
-            if ( $row->ipb_by ?? null ) {
-                $lb->add( NS_USER, $row->ipb_by_text );
-                $lb->add( NS_USER_TALK, $row->ipb_by_text );
+            if ( $result->gub_target_central_id !== null ) {
+                $targetName = $this->centralIdLookup->nameFromCentralId( $result->gub_target_central_id );
+            } else {
+                $targetName = $result->gub_target_address;
             }
+
+            $lb->add( NS_USER, $targetName );
+            $lb->add( NS_USER_TALK, $targetName );
+
+            $performerName = $this->centralIdLookup->nameFromCentralId( $row->gub_performer_central_id );
+            $lb->add( NS_USER, $performerName );
+            $lb->add( NS_USER_TALK, $performerName );
         }
 
         $lb->execute();
-
-        // Format comments
-        // The keys of formattedComments will be the corresponding offset into $result
-        $this->formattedComments = $this->rowCommentFormatter->formatRows( $result, 'ipb_reason' );
     }
 
 }
