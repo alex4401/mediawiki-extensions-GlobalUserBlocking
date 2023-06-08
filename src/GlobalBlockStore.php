@@ -44,19 +44,29 @@ class GlobalBlockStore {
     /** @var UserFactory */
     private $userFactory;
 
+    /** @var CentralIdLookup */
+    private $centralIdLookup;
+
+    /** @var GlobalBlockUtils */
+    private $blockUtils;
+
     /**
      * @param ServiceOptions $options
      * @param LoggerInterface $logger
      * @param ILoadBalancer $loadBalancer
      * @param ReadOnlyMode $readOnlyMode
      * @param UserFactory $userFactory
+     * @param CentralIdLookup $centralIdLookup
+     * @param GlobalBlockUtils $blockUtils
      */
     public function __construct(
         ServiceOptions $options,
         LoggerInterface $logger,
         ILoadBalancer $loadBalancer,
         ReadOnlyMode $readOnlyMode,
-        UserFactory $userFactory
+        UserFactory $userFactory,
+        CentralIdLookup $centralIdLookup,
+        GlobalBlockUtils $blockUtils
     ) {
         $options->assertRequiredOptions( self::CONSTRUCTOR_OPTIONS );
 
@@ -65,6 +75,8 @@ class GlobalBlockStore {
         $this->loadBalancer = $loadBalancer;
         $this->readOnlyMode = $readOnlyMode;
         $this->userFactory = $userFactory;
+        $this->centralIdLookup = $centralIdLookup;
+        $this->blockUtils = $blockUtils;
     }
 
     /**
@@ -104,12 +116,11 @@ class GlobalBlockStore {
      */
     protected function load( $specificTarget, $specificType, $fromPrimary, $vagueTarget = null ) {
         $db = $this->loadBalancer->getConnection( $fromPrimary ? DB_PRIMARY : DB_REPLICA );
-        $centralIdLookup = MediaWikiServices::getInstance()->getCentralIdLookup();
 
         if ( $specificType !== null ) {
             if ( $specificType === GlobalBlock::TYPE_USER ) {
                 $conds = [ 'gub_target_central_id' => [
-                    $centralIdLookup->centralIdFromLocalUser( $specificTarget, CentralIdLookup::AUDIENCE_RAW )
+                    $this->centralIdLookup->centralIdFromLocalUser( $specificTarget, CentralIdLookup::AUDIENCE_RAW )
                 ] ];
             } else {
                 $conds = [ 'gub_target_address' => [ (string)$specificTarget ] ];
@@ -124,12 +135,11 @@ class GlobalBlockStore {
         # Be aware that the != '' check is explicit, since empty values will be
         # passed by some callers (T31116)
         if ( $vagueTarget != '' ) {
-            list( $target, $type ) = MediaWikiServices::getInstance()->getService( GlobalBlockUtils::SERVICE_NAME )
-                ->parseBlockTarget( $vagueTarget );
+            list( $target, $type ) = $this->blockUtils->parseBlockTarget( $vagueTarget );
             switch ( $type ) {
                 case GlobalBlock::TYPE_USER:
                     $conds['gub_target_central_id'][] =
-                        $centralIdLookup->centralIdFromLocalUser( $specificTarget, CentralIdLookup::AUDIENCE_RAW );
+                        $this->centralIdLookup->centralIdFromLocalUser( $specificTarget, CentralIdLookup::AUDIENCE_RAW );
                     $conds = $db->makeList( $conds, LIST_OR );
                     break;
 
@@ -217,17 +227,13 @@ class GlobalBlockStore {
      * @return GlobalBlock[] Any relevant blocks
      */
     public function loadListFromTarget( $specificTarget, $vagueTarget = null, $fromPrimary = false ) {
-        list( $target, $type ) = MediaWikiServices::getInstance()->getService( GlobalBlockUtils::SERVICE_NAME )
-            ->parseBlockTarget( $specificTarget );
-        if ( $type == GlobalBlock::TYPE_ID || $type == GlobalBlock::TYPE_AUTO ) {
+        list( $target, $type ) = $this->blockUtils->parseBlockTarget( $specificTarget );
+        if ( $type == GlobalBlock::TYPE_ID ) {
             $block = $this->loadFromID( $target );
             return $block ? [ $block ] : [];
         } elseif ( $target === null && $vagueTarget == '' ) {
             return [];
-        } elseif ( in_array(
-            $type,
-            [ GlobalBlock::TYPE_USER, GlobalBlock::TYPE_IP, GlobalBlock::TYPE_RANGE, null ] )
-        ) {
+        } elseif ( in_array( $type, [ GlobalBlock::TYPE_USER, GlobalBlock::TYPE_IP, GlobalBlock::TYPE_RANGE, null ] ) ) {
             return $this->load( $target, $type, $fromPrimary, $vagueTarget );
         }
         return [];
@@ -424,7 +430,7 @@ class GlobalBlockStore {
      * The ID field needs to be loaded first.
      *
      * @param GlobalBlock $block
-     * @return bool|array False on failure, array on success: ('id' => block ID, 'autoIds' => array of autoblock IDs)
+     * @return bool|array False on failure, array on success: ('id' => block ID)
      */
     public function updateBlock( GlobalBlock $block ) {
         $this->logger->debug( 'Updating block; timestamp ' . $block->getTimestamp() );

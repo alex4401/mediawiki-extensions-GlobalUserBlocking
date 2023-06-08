@@ -126,7 +126,6 @@ class SpecialGlobalUnblock extends SpecialPage {
                     $out->addWikiMsg( 'unblocked-range', wfEscapeWikiText( $this->target ) );
                     break;
                 case GlobalBlock::TYPE_ID:
-                case GlobalBlock::TYPE_AUTO:
                     // @phan-suppress-next-line PhanTypeMismatchArgumentNullable target is set when type is set
                     $out->addWikiMsg( 'unblocked-id', wfEscapeWikiText( $this->target ) );
                     break;

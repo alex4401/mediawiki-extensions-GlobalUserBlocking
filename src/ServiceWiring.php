@@ -33,7 +33,9 @@ return [
             LoggerFactory::getInstance( 'GlobalBlockStore' ),
             $services->getDBLoadBalancer(),
             $services->getReadOnlyMode(),
-            $services->getUserFactory()
+            $services->getUserFactory(),
+            $services->getCentralIdLookup(),
+            $services->getService( GlobalBlockUtils::SERVICE_NAME )
         );
     },
     GlobalBlockCommandFactory::SERVICE_NAME => static function (

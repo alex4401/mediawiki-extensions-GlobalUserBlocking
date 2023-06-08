@@ -82,13 +82,6 @@ class GlobalBlockRemover {
 
         // Process params
         list( $this->target, $this->targetType ) = $this->blockUtils->parseBlockTarget( $target );
-        if (
-            $this->targetType === GlobalBlock::TYPE_AUTO &&
-            is_numeric( $this->target )
-        ) {
-            // Needed, because BlockUtils::parseBlockTarget will strip the # from autoblocks.
-            $this->target = '#' . $this->target;
-        }
         $this->block = $this->blockStore->loadFromTarget( $this->target );
         $this->performer = $performer;
         $this->reason = $reason;
