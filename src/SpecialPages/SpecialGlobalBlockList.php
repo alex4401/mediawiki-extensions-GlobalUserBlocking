@@ -2,9 +2,11 @@
 namespace MediaWiki\Extension\GlobalUserBlocking\SpecialPages;
 
 use CentralIdLookup;
+use CommentStore;
 use Html;
 use HTMLForm;
 use MediaWiki\Block\BlockUtils;
+use MediaWiki\Cache\LinkBatchFactory;
 use MediaWiki\CommentFormatter\CommentFormatter;
 use MediaWiki\Extension\GlobalUserBlocking\GlobalBlock;
 use MediaWiki\Extension\GlobalUserBlocking\GlobalBlockStore;
@@ -24,9 +26,6 @@ class SpecialGlobalBlockList extends SpecialPage {
     /** @var LinkBatchFactory */
     private $linkBatchFactory;
 
-    /** @var BlockRestrictionStore */
-    private $blockRestrictionStore;
-
     /** @var ILoadBalancer */
     private $loadBalancer;
 
@@ -36,29 +35,18 @@ class SpecialGlobalBlockList extends SpecialPage {
     /** @var GlobalBlockUtils */
     private $blockUtils;
 
-    /** @var BlockActionInfo */
-    private $blockActionInfo;
-
-    /** @var RowCommentFormatter */
-    private $rowCommentFormatter;
-
     public function __construct(
         LinkBatchFactory $linkBatchFactory,
-        BlockRestrictionStore $blockRestrictionStore,
         ILoadBalancer $loadBalancer,
         CommentStore $commentStore,
-        GlobalBlockUtils $blockUtils,
-        BlockActionInfo $blockActionInfo
+        GlobalBlockUtils $blockUtils
     ) {
         parent::__construct( 'GlobalBlockUserList' );
 
         $this->linkBatchFactory = $linkBatchFactory;
-        $this->blockRestrictionStore = $blockRestrictionStore;
         $this->loadBalancer = $loadBalancer;
         $this->commentStore = $commentStore;
         $this->blockUtils = $blockUtils;
-        $this->blockActionInfo = $blockActionInfo;
-        $this->rowCommentFormatter = $rowCommentFormatter;
     }
 
     /**

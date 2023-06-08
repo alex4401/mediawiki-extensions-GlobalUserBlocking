@@ -117,8 +117,10 @@
 		"GlobalBlockList": {
 			"class": "MediaWiki\\Extension\\GlobalUserBlocking\\SpecialPages\\SpecialGlobalBlockList",
 			"services": [
-				"GlobalUserBlocking.GlobalBlockUtils",
-				"CommentFormatter"
+				"LinkBatchFactory",
+				"DBLoadBalancer",
+				"CommentStore",
+				"GlobalUserBlocking.GlobalBlockUtils"
 			]
 		}
 	},
