@@ -85,15 +85,6 @@
 		"src/ServiceWiring.php"
 	],
 
-	"APIModules": {
-		"globaluserblock": {
-			"class": "MediaWiki\\Extension\\GlobalUserBlocking\\ApiGlobalUserBlock",
-			"services": [
-				"BlockUserFactory"
-			]
-		}
-	},
-
 	"SpecialPages": {
 		"GlobalBlock": {
 			"class": "MediaWiki\\Extension\\GlobalUserBlocking\\SpecialPages\\SpecialGlobalBlock",
