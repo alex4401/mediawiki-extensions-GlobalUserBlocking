@@ -19,6 +19,7 @@
     "globalblocklist": "Globally blocked users",
     "globalunblock": "Unblock user globally",
     "globaluserblocking-unblockip": "Unblock globally",
+    "action-globalblock": "modify global block settings of users",
 
 	"globaluserblocking-contributions-notice": "This {{GENDER:$1|user}} is currently globally blocked.\nThe latest block log entry is provided below for reference:",
 	"globaluserblocking-contributions-notice-anon": "This IP address is currently globally blocked.\nThe latest block log entry is provided below for reference:",
