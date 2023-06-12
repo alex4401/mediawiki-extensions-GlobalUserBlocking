@@ -102,7 +102,7 @@ class GlobalBlockUtils {
      *
      * If the type is not null, it will be an AbstractBlock::TYPE_ constant.
      *
-     * @param string|UserIdentity|null $target
+     * @param string|int|UserIdentity|null $target
      * @return array [ UserIdentity|String|null, int|null ]
      */
     public function parseBlockTarget( $target ): array {
@@ -117,32 +117,31 @@ class GlobalBlockUtils {
             return [ null, null ];
         }
 
-        $target = trim( $target );
+        $trimmedTarget = trim( $target );
 
-        if ( IPUtils::isValid( $target ) ) {
+        if ( IPUtils::isValid( $trimmedTarget ) ) {
             return [
-                UserIdentityValue::newAnonymous( IPUtils::sanitizeIP( $target ) ),
+                UserIdentityValue::newAnonymous( IPUtils::sanitizeIP( $trimmedTarget ) ),
                 GlobalBlock::TYPE_IP
             ];
 
-        } elseif ( IPUtils::isValidRange( $target ) ) {
+        } elseif ( IPUtils::isValidRange( $trimmedTarget ) ) {
             // Can't create a UserIdentity from an IP range
-            return [ IPUtils::sanitizeRange( $target ), GlobalBlock::TYPE_RANGE ];
-        }
-
-        // Consider the possibility that this is not a username at all
-        // but actually an old subpage (T31797)
-        if ( strpos( $target, '/' ) !== false ) {
-            // An old subpage, drill down to the user behind it
-            $target = explode( '/', $target )[0];
+            return [ IPUtils::sanitizeRange( $trimmedTarget ), GlobalBlock::TYPE_RANGE ];
         }
 
         if ( preg_match( '/^#\d+$/', $target ) ) {
-            // Autoblock reference in the form "#12345"
-            return [ substr( $target, 1 ), GlobalBlock::TYPE_AUTO ];
+            // ID reference
+            return [ substr( $target, 1 ), GlobalBlock::TYPE_ID ];
         }
 
-        $userFromDB = $this->userIdentityLookup->getUserIdentityByName( $target );
+        $userFromDB = null;
+        if ( is_int( $target ) ) {
+            $userFromDB = $this->centralIdLookup->localUserFromCentralId( $target, CentralIdLookup::AUDIENCE_RAW );
+        } else {
+            $userFromDB = $this->userIdentityLookup->getUserIdentityByName( $trimmedTarget );
+        }
+
         if ( $userFromDB instanceof UserIdentity ) {
             // Note that since numbers are valid usernames, a $target of "12345" will be
             // considered a UserIdentity. If you want to pass a block ID, prepend a hash "#12345",
