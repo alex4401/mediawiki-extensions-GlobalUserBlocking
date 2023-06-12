@@ -1,20 +1,30 @@
 <?php
 namespace MediaWiki\Extension\GlobalUserBlocking;
 
+use CentralIdLookup;
 use Config;
+use Html;
 use LogicException;
+use MediaWiki\Block\Block;
 use MediaWiki\Permissions\PermissionManager;
 use MediaWiki\Block\CompositeBlock;
 use MediaWiki\CommentFormatter\CommentFormatter;
+use MediaWiki\Extension\GlobalUserBlocking\SpecialPages\GlobalBlockListPager;
+use MediaWiki\MediaWikiServices;
 use MediaWiki\User\UserFactory;
 use Message;
+use RequestContext;
 use SpecialPage;
 use Title;
 use Wikimedia\IPUtils;
 
 class HookHandler implements
     \MediaWiki\Block\Hook\GetUserBlockHook,
-    \MediaWiki\Hook\ContributionsToolLinksHook {
+    \MediaWiki\Hook\ContributionsToolLinksHook,
+    \MediaWiki\Hook\UserToolLinksEditHook,
+    \MediaWiki\Hook\OtherBlockLogLinkHook,
+    \MediaWiki\Hook\SpecialContributionsBeforeMainOutputHook
+{
 
     public static function onLoadExtensionSchemaUpdates( $updater ) {
         $base = __DIR__ . '/..';
@@ -34,13 +44,15 @@ class HookHandler implements
     /** @var Config */
     private $config;
 
-    /** @var CommentFormatter */
-    private $commentFormatter;
+    /** @var GlobalBlockUtils */
+    private $blockUtils;
 
     /** @var GlobalBlockStore */
     private $blockStore;
 
     private UserFactory $userFactory;
+
+    private CentralIdLookup $centralIdLookup;
 
     /**
      * @param PermissionManager $permissionManager
@@ -50,15 +62,17 @@ class HookHandler implements
     public function __construct(
         PermissionManager $permissionManager,
         Config $mainConfig,
-        CommentFormatter $commentFormatter,
+        GlobalBlockUtils $blockUtils,
         GlobalBlockStore $blockStore,
-        UserFactory $userFactory
+        UserFactory $userFactory,
+        CentralIdLookup $centralIdLookup
     ) {
         $this->permissionManager = $permissionManager;
         $this->config = $mainConfig;
-        $this->commentFormatter = $commentFormatter;
+        $this->blockUtils = $blockUtils;
         $this->blockStore = $blockStore;
         $this->userFactory = $userFactory;
+        $this->centralIdLookup = $centralIdLookup;
     }
 
     public function onGetUserBlock( $user, $ip, &$block ) {
@@ -96,10 +110,21 @@ class HookHandler implements
         return true;
     }
 
+    public function onGetLogTypesOnUser( &$types ) {
+        $types[] = 'globalblock';
+        return true;
+    }
+
+    public function onUserToolLinksEdit( $userId, $userText, &$items ) {
+        if ( RequestContext::getMain()->getAuthority()->isAllowed( 'globalblock' ) ) {
+            // TODO: insert a global block link
+        }
+    }
+
     public function onContributionsToolLinks( $id, Title $title, array &$tools, SpecialPage $specialPage ) {
         $user = $specialPage->getUser();
         $linkRenderer = $specialPage->getLinkRenderer();
-        $target = $title->getText();
+        $target = $title->getDBkey();
 
         if ( $this->permissionManager->userHasRight( $user, 'globalblock' ) ) {
             $targetUser = $id === 0 ? $this->userFactory->newAnonymous( $target ) : $this->userFactory->newFromId( $id );
@@ -122,14 +147,63 @@ class HookHandler implements
         }
     }
 
-    /**
-     * So users can just type in a username for target and it'll work
-     * @param array &$types
-     * @return bool
-     */
-    public function onGetLogTypesOnUser( &$types ) {
-        $types[] = 'globalblock';
+    public function onSpecialContributionsBeforeMainOutput( $userId, $user, $sp ) {
+        $name = $user->getName();
+        $centralId = 0;
+        if ( !IPUtils::isIPAddress( $name ) ) {
+            $centralId = $this->centralIdLookup->centralIdFromLocalUser( $user );
+        }
 
+        $block = $this->blockStore->loadFromTarget( $name, $centralId );
+
+        if ( $block !== null ) {
+            $conds = GlobalBlockStore::getRangeCond( $block->gb_address );
+            $pager = new GlobalBlockListPager(
+                $sp->getContext(),
+                $this->blockUtils,
+                MediaWikiServices::getInstance()->getLinkBatchFactory(),
+                MediaWikiServices::getInstance()->getLinkRenderer(),
+                MediaWikiServices::getInstance()->getDBLoadBalancer(),
+                MediaWikiServices::getInstance()->getSpecialPageFactory(),
+                $this->centralIdLookup,
+                $conds,
+                $sp->getLinkRenderer()
+            );
+            $body = $pager->formatRow( $block );
+
+            $msg = $user->isAnon() ? 'globaluserblocking-contributions-notice-anon' : 'globaluserblocking-contributions-notice';
+            $out = $sp->getOutput();
+            $out->addHTML(
+                Html::warningBox(
+                    $sp->msg( $msg, $name )->parseAsBlock() .
+                Html::rawElement( 'ul', [], $body ),
+                    'mw-warning-with-logexcerpt'
+                )
+            );
+        }
+
+        return true;
+    }
+
+    public function onOtherBlockLogLink( &$msg, $ip ) {
+        $centralId = 0;
+        $msgKey = 'globaluserblocking-loglink-anon';
+        if ( !IPUtils::isIPAddress( $ip ) ) {
+            $centralId = $this->centralIdLookup->centralIdFromName( $ip, CentralIdLookup::AUDIENCE_RAW );
+            $msgKey = 'globaluserblocking-loglink';
+        }
+
+        $block = $this->blockStore->loadFromTarget( $ip, $centralId );
+
+        if ( !$block ) {
+            return true;
+        }
+
+        $msg[] = Html::rawElement(
+            'span',
+            [ 'class' => 'mw-globalblock-loglink plainlinks' ],
+            wfMessage( $msgKey, $ip )->parse()
+        );
         return true;
     }
 }

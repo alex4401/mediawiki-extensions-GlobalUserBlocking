@@ -126,23 +126,27 @@
 		}
 	},
 	
-	"Hooks": {
-		"LoadExtensionSchemaUpdates": "MediaWiki\\Extension\\GlobalUserBlocking\\HookHandler::onLoadExtensionSchemaUpdates",
-		"GetUserBlock": "MainHandler",
-		"ContributionsToolLinks": "MainHandler"
-	},
     "HookHandlers": {
         "MainHandler": {
             "class": "MediaWiki\\Extension\\GlobalUserBlocking\\HookHandler",
 			"services": [
 				"PermissionManager",
 				"MainConfig",
-				"CommentFormatter",
+				"GlobalUserBlocking.GlobalBlockUtils",
 				"GlobalUserBlocking.GlobalBlockStore",
-				"UserFactory"
+				"UserFactory",
+				"CentralIdLookup"
 			]
         }
     },
+	"Hooks": {
+		"LoadExtensionSchemaUpdates": "MediaWiki\\Extension\\GlobalUserBlocking\\HookHandler::onLoadExtensionSchemaUpdates",
+		"GetUserBlock": "MainHandler",
+		"ContributionsToolLinks": "MainHandler",
+		"UserToolLinksEdit": "MainHandler",
+		"OtherBlockLogLink": "MainHandler",
+		"SpecialContributionsBeforeMainOutput": "MainHandler"
+	},
 
 	"config": {
 		"ApplyGlobalBlocks": {

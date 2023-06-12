@@ -11,9 +11,22 @@
     "globalblock-reason": "Reason",
     "globalblock-options": "Additional options",
 
-	"globalblock": "Block other users from editing globally",
-    "globalblockexempt": "Bypass global user, IP and range blocks",
+	"right-globalblock": "Block other users from editing globally",
+    "right-globalblockexempt": "Bypass global user, IP and range blocks",
 	"grant-globalblock": "Globally block or unblock users or IP addresses",
+
+    "globalblock": "Block user globally",
+    "globalblocklist": "Globally blocked users",
+    "globalunblock": "Unblock user globally",
+    "globaluserblocking-unblockip": "Unblock globally",
+
+	"globaluserblocking-contributions-notice": "This {{GENDER:$1|user}} is currently globally blocked.\nThe latest block log entry is provided below for reference:",
+	"globaluserblocking-contributions-notice-anon": "This IP address is currently globally blocked.\nThe latest block log entry is provided below for reference:",
+	"globaluserblocking-loglink": "This {{GENDER:$1|user}} is globally blocked ([[{{#Special:GlobalBlockList}}/$1|full details]]).",
+	"globaluserblocking-loglink-anon": "The IP address $1 is globally blocked ([[{{#Special:GlobalBlockList}}/$1|full details]]).",
+
+	"globaluserblocking-blockipsuccesssub": "Global block succeeded",
+	"globaluserblocking-blockipsuccesstext": "[[Special:Contributions/$1|$1]] has been blocked.<br />\nSee the [[Special:GlobalBlockList|global block list]] to review blocks.",
 
 	"globaluserblocking-logpage": "Global block log",
 	"globaluserblocking-logpagetext": "This is a log of global blocks which have been made or removed on this wiki.\nIt should be noted that global blocks can be made and removed on other wikis, and that these global blocks will affect this wiki.\nTo view all active global blocks, you may view the [[Special:GlobalBlockList|global block list]].",

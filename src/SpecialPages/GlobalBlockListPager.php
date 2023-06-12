@@ -37,9 +37,6 @@ class GlobalBlockListPager extends TablePager {
     /** @var GlobalBlockUtils */
     private $blockUtils;
 
-    /** @var CommentStore */
-    private $commentStore;
-
     /** @var LinkBatchFactory */
     private $linkBatchFactory;
 
@@ -49,15 +46,11 @@ class GlobalBlockListPager extends TablePager {
     /** @var CentralIdLookup */
     private $centralIdLookup;
 
-    /** @var string[] */
-    private $formattedComments = [];
-
     /**
      * @param IContextSource $context
      * @param BlockActionInfo $blockActionInfo
      * @param BlockRestrictionStore $blockRestrictionStore
      * @param GlobalBlockUtils $blockUtils
-     * @param CommentStore $commentStore
      * @param LinkBatchFactory $linkBatchFactory
      * @param LinkRenderer $linkRenderer
      * @param ILoadBalancer $loadBalancer
@@ -68,7 +61,6 @@ class GlobalBlockListPager extends TablePager {
     public function __construct(
         IContextSource $context,
         GlobalBlockUtils $blockUtils,
-        CommentStore $commentStore,
         LinkBatchFactory $linkBatchFactory,
         LinkRenderer $linkRenderer,
         ILoadBalancer $loadBalancer,
@@ -79,7 +71,6 @@ class GlobalBlockListPager extends TablePager {
         $this->mDb = $loadBalancer->getConnection( ILoadBalancer::DB_REPLICA );
         parent::__construct( $context, $linkRenderer );
         $this->blockUtils = $blockUtils;
-        $this->commentStore = $commentStore;
         $this->linkBatchFactory = $linkBatchFactory;
         $this->specialPageFactory = $specialPageFactory;
         $this->centralIdLookup = $centralIdLookup;

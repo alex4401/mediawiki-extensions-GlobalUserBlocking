@@ -589,8 +589,8 @@ class SpecialGlobalBlock extends FormSpecialPage {
     /** @inheritDoc */
     public function onSuccess() {
         $out = $this->getOutput();
-        $out->setPageTitle( $this->msg( 'blockipsuccesssub' ) );
-        $out->addWikiMsg( 'blockipsuccesstext', wfEscapeWikiText( $this->target ) );
+        $out->setPageTitle( $this->msg( 'globaluserblocking-blockipsuccesssub' ) );
+        $out->addWikiMsg( 'globaluserblocking-blockipsuccesstext', wfEscapeWikiText( $this->target ) );
     }
 
     /** @inheritDoc */

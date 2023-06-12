@@ -71,7 +71,7 @@ class SpecialGlobalBlockList extends SpecialPage {
         $this->options = $request->getArray( 'wpOptions', [] );
 
         $out = $this->getOutput();
-        $out->setPageTitle( $this->msg( 'globaluserblocking-list' ) );
+        $out->setPageTitle( $this->msg( 'globalblocklist' ) );
         $out->setArticleRelated( false );
 
         // Set the pager up here to get the actual default Limit
@@ -185,7 +185,6 @@ class SpecialGlobalBlockList extends SpecialPage {
         return new GlobalBlockListPager(
             $this->getContext(),
             $this->blockUtils,
-            $this->commentStore,
             $this->linkBatchFactory,
             $this->getLinkRenderer(),
             $this->loadBalancer,
