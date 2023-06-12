@@ -203,7 +203,7 @@ class GlobalBlockUtils {
             return [ substr( $target, 1 ), GlobalBlock::TYPE_AUTO ];
         }
 
-        $userFromDB = $this->centralIdLookup->localUserFromCentralId( $target );
+        $userFromDB = $this->centralIdLookup->localUserFromCentralId( $target, CentralIdLookup::AUDIENCE_RAW );
         if ( $userFromDB instanceof UserIdentity ) {
             // Note that since numbers are valid usernames, a $target of "12345" will be
             // considered a UserIdentity. If you want to pass a block ID, prepend a hash "#12345",

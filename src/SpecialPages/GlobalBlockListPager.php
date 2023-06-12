@@ -152,7 +152,8 @@ class GlobalBlockListPager extends TablePager {
                 $target = null;
 
                 if ( (int)$row->gub_target_central_id !== 0 ) {
-                    $target = $this->centralIdLookup->localUserFromCentralId( (int)$row->gub_target_central_id );
+                    $target = $this->centralIdLookup->localUserFromCentralId( (int)$row->gub_target_central_id,
+                        CentralIdLookup::AUDIENCE_PUBLIC );
                 } else {
                     list( $target, ) = $this->blockUtils->parseBlockTarget( $row->gub_target_address );
                 }
@@ -186,7 +187,8 @@ class GlobalBlockListPager extends TablePager {
                 if ( $this->getAuthority()->isAllowed( 'block' ) ) {
                     $targetName = $row->gub_target_address;
                     if ( (int)$row->gub_target_central_id !== 0 ) {
-                        $targetName = $this->centralIdLookup->nameFromCentralId( (int)$row->gub_target_central_id );
+                        $targetName = $this->centralIdLookup->nameFromCentralId( (int)$row->gub_target_central_id,
+                            CentralIdLookup::AUDIENCE_PUBLIC );
                     }
 
                     $links = [];
@@ -332,7 +334,8 @@ class GlobalBlockListPager extends TablePager {
 
         foreach ( $result as $row ) {
             if ( $result->gub_target_central_id !== null ) {
-                $targetName = $this->centralIdLookup->nameFromCentralId( $result->gub_target_central_id );
+                $targetName = $this->centralIdLookup->nameFromCentralId( $result->gub_target_central_id,
+                    CentralIdLookup::AUDIENCE_PUBLIC );
             } else {
                 $targetName = $result->gub_target_address;
             }
@@ -340,7 +343,8 @@ class GlobalBlockListPager extends TablePager {
             $lb->add( NS_USER, $targetName );
             $lb->add( NS_USER_TALK, $targetName );
 
-            $performerName = $this->centralIdLookup->nameFromCentralId( $row->gub_performer_central_id );
+            $performerName = $this->centralIdLookup->nameFromCentralId( $row->gub_performer_central_id,
+                CentralIdLookup::AUDIENCE_PUBLIC );
             $lb->add( NS_USER, $performerName );
             $lb->add( NS_USER_TALK, $performerName );
         }
