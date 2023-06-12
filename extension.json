@@ -107,7 +107,6 @@
 		"SpecialContributionsBeforeMainOutput": "MainHandler"
 	},
 
-
 	"ResourceFileModulePaths": {
 		"localBasePath": "modules",
 		"remoteExtPath": "GlobalUserBlocking/modules"

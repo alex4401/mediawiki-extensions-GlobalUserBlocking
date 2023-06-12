@@ -11,6 +11,8 @@ use MediaWiki\Permissions\PermissionManager;
 use MediaWiki\Block\CompositeBlock;
 use MediaWiki\CommentFormatter\CommentFormatter;
 use MediaWiki\Extension\GlobalUserBlocking\SpecialPages\GlobalBlockListPager;
+use MediaWiki\Extension\GlobalUserBlocking\SpecialPages\RedirectSpecialGlobalBlock;
+use MediaWiki\Extension\GlobalUserBlocking\SpecialPages\RedirectSpecialGlobalUnblock;
 use MediaWiki\MediaWikiServices;
 use MediaWiki\User\UserFactory;
 use Message;
@@ -46,7 +48,8 @@ class HookHandler implements
      * Sets configuration constants.
      */
     public static function onRegistration() {
-        global $wgLogTypes, $wgLogNames, $wgLogHeaders, $wgLogActions, $wgLogActionsHandlers, $wgActionFilteredLogs;
+        global $wgLogTypes, $wgLogNames, $wgLogHeaders, $wgLogActions, $wgLogActionsHandlers, $wgActionFilteredLogs,
+            $wgSpecialPages;
 
         if ( Utils::isCentralWiki() ) {
             $wgLogTypes[] = 'globalblock';
@@ -63,8 +66,14 @@ class HookHandler implements
                 'reblock' => [ 'reblock' ],
                 'unblock' => [ 'unblock' ]
             ];
+        } else {
+            $wgSpecialPages['GlobalBlock'] = [
+                'class' => RedirectSpecialGlobalBlock::class
+            ];
+            $wgSpecialPages['GlobalUnblock'] = [
+                'class' => RedirectSpecialGlobalUnblock::class
+            ];
         }
-
     }
 
     /** @var PermissionManager */
