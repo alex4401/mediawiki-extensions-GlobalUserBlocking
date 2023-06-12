@@ -139,6 +139,39 @@
 		"SpecialContributionsBeforeMainOutput": "MainHandler"
 	},
 
+
+	"ResourceFileModulePaths": {
+		"localBasePath": "modules",
+		"remoteExtPath": "GlobalUserBlocking/modules"
+	},
+	"ResourceModules": {
+		"ext.globaluserblocking.special.globalblock": {
+			"packageFiles": [
+				"ext.globaluserblocking.special.globalblock.js",
+				{
+					"name": "config.json",
+					"config": [
+						"BlockAllowsUTEdit"
+					]
+				}
+			],
+			"dependencies": [
+				"oojs-ui-core",
+				"oojs-ui.styles.icons-editing-core",
+				"oojs-ui.styles.icons-editing-advanced",
+				"mediawiki.widgets.DateInputWidget",
+				"mediawiki.widgets.SelectWithInputWidget",
+				"mediawiki.widgets.NamespacesMultiselectWidget",
+				"mediawiki.widgets.TitlesMultiselectWidget",
+				"mediawiki.widgets.UserInputWidget",
+				"mediawiki.util",
+				"mediawiki.htmlform",
+				"moment"
+			],
+			"targets": [ "desktop", "mobile" ]
+		}
+	},
+
 	"config": {
 		"ApplyGlobalBlocks": {
 			"value": true

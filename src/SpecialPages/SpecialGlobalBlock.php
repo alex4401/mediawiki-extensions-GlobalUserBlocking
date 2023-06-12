@@ -181,7 +181,7 @@ class SpecialGlobalBlock extends FormSpecialPage {
             'mediawiki.widgets.TagMultiselectWidget.styles',
             'mediawiki.special',
         ] );
-        $this->getOutput()->addModules( [ 'mediawiki.special.block' ] );
+        $this->getOutput()->addModules( [ 'ext.globaluserblocking.special.globalblock' ] );
 
         $blockCIDRLimit = $this->getConfig()->get( MainConfigNames::BlockCIDRLimit );
         $text = $this->msg( 'blockiptext', $blockCIDRLimit['IPv4'], $blockCIDRLimit['IPv6'] )->parse();
