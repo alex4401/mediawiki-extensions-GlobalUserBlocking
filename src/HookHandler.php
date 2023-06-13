@@ -1,7 +1,6 @@
 <?php
 namespace MediaWiki\Extension\GlobalUserBlocking;
 
-use BlockLogFormatter;
 use CentralIdLookup;
 use Config;
 use Html;
@@ -17,7 +16,6 @@ use Message;
 use RequestContext;
 use SpecialPage;
 use Title;
-use WikiMap;
 use Wikimedia\IPUtils;
 
 class HookHandler implements
@@ -38,33 +36,6 @@ class HookHandler implements
         );
 
         return true;
-    }
-
-    /**
-     * Implements extension registration callback.
-     * See https://www.mediawiki.org/wiki/Manual:Extension_registration#Customizing_registration
-     * Sets configuration constants.
-     */
-    public static function onRegistration() {
-        global $wgLogTypes, $wgLogNames, $wgLogHeaders, $wgLogActions, $wgLogActionsHandlers, $wgActionFilteredLogs;
-
-        if ( Utils::isCentralWiki() ) {
-            $wgLogTypes[] = 'globalblock';
-            $wgLogNames['globalblock'] = 'globaluserblocking-logpage';
-            $wgLogHeaders['globalblock'] = 'globaluserblocking-logpagetext';
-            $wgLogActions['globalblock/block'] = 'globaluserblocking-block-logentry';
-            $wgLogActions['globalblock/reblock'] = 'globaluserblocking-reblock-logentry';
-            $wgLogActions['globalblock/unblock'] = 'globaluserblocking-unblock-logentry';
-            $wgLogActionsHandlers['globalblock/block'] = BlockLogFormatter::class;
-            $wgLogActionsHandlers['globalblock/reblock'] = BlockLogFormatter::class;
-            $wgLogActionsHandlers['globalblock/unblock'] = BlockLogFormatter::class;
-            $wgActionFilteredLogs['globalblock'] = [
-                'block' => [ 'block' ],
-                'reblock' => [ 'reblock' ],
-                'unblock' => [ 'unblock' ]
-            ];
-        }
-
     }
 
     /** @var PermissionManager */
@@ -106,7 +77,7 @@ class HookHandler implements
 
     public function onGetUserBlock( $user, $ip, &$block ) {
         // Check if global blocks are enabled on this wiki, or maybe only managed
-        if ( !$this->config->get( 'GUBApplyBlocks' ) ) {
+        if ( !$this->config->get( 'ApplyGlobalBlocks' ) ) {
             return true;
         }
 

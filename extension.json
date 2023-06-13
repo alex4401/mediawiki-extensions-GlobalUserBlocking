@@ -45,6 +45,39 @@
 		"globalblock": "administration"
 	},
 
+	"LogTypes": [
+		"globalblock"
+	],
+	"LogNames": {
+		"globalblock": "globaluserblocking-logpage"
+	},
+	"LogHeaders": {
+		"globalblock": "globaluserblocking-logpagetext"
+	},
+	"LogActions": {
+		"globalblock/block": "globaluserblocking-block-logentry",
+		"globalblock/reblock": "globaluserblocking-reblock-logentry",
+		"globalblock/unblock": "globaluserblocking-unblock-logentry"
+	},
+	"LogActionsHandlers": {
+		"globalblock/block": "BlockLogFormatter",
+		"globalblock/reblock": "BlockLogFormatter",
+		"globalblock/unblock": "BlockLogFormatter"
+	},
+	"ActionFilteredLogs": {
+		"globalblock": {
+			"block": [
+				"block"
+			],
+			"unblock": [
+				"unblock"
+			],
+			"reblock": [
+				"reblock"
+			]
+		}
+	},
+
 	"AutoloadNamespaces": {
 		"MediaWiki\\Extension\\GlobalUserBlocking\\": "src/"
 	},
@@ -100,7 +133,6 @@
 			]
         }
     },
-	"callback": "MediaWiki\\Extension\\GlobalUserBlocking\\HookHandler::onRegistration",
 	"Hooks": {
 		"LoadExtensionSchemaUpdates": "MediaWiki\\Extension\\GlobalUserBlocking\\HookHandler::onLoadExtensionSchemaUpdates",
 		"GetUserBlock": "MainHandler",
@@ -143,13 +175,9 @@
 		}
 	},
 
-	"config_prefix": "wgGUB",
 	"config": {
-		"ApplyBlocks": {
+		"ApplyGlobalBlocks": {
 			"value": true
-		},
-		"CentralWiki": {
-			"value": null
 		}
 	},
 
