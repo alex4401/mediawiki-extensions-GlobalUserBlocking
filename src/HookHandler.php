@@ -77,7 +77,7 @@ class HookHandler implements
 
     public function onGetUserBlock( $user, $ip, &$block ) {
         // Check if global blocks are enabled on this wiki, or maybe only managed
-        if ( !$this->config->get( 'ApplyGlobalBlocks' ) ) {
+        if ( !$this->config->get( 'GUBApplyBlocks' ) ) {
             return true;
         }
 

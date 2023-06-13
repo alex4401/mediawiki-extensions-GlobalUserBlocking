@@ -175,9 +175,13 @@
 		}
 	},
 
+	"config_prefix": "wgGUB",
 	"config": {
-		"ApplyGlobalBlocks": {
+		"ApplyBlocks": {
 			"value": true
+		},
+		"CentralWiki": {
+			"value": null
 		}
 	},
 
