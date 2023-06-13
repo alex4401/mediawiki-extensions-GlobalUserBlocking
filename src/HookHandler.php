@@ -157,19 +157,19 @@ class HookHandler implements
         $block = $this->blockStore->loadFromTarget( $name, $centralId );
 
         if ( $block !== null ) {
-            $conds = GlobalBlockStore::getRangeCond( $block->gb_address );
             $pager = new GlobalBlockListPager(
                 $sp->getContext(),
                 $this->blockUtils,
                 MediaWikiServices::getInstance()->getLinkBatchFactory(),
-                MediaWikiServices::getInstance()->getLinkRenderer(),
+                $sp->getLinkRenderer(),
                 MediaWikiServices::getInstance()->getDBLoadBalancer(),
                 MediaWikiServices::getInstance()->getSpecialPageFactory(),
                 $this->centralIdLookup,
-                $conds,
-                $sp->getLinkRenderer()
+                [
+                    'gub_id' => $block->getId()
+                ]
             );
-            $body = $pager->formatRow( $block );
+            $body = $pager->formatRow( (object)$this->blockStore->getArrayForBlockHack( $block ) );
 
             $msg = $user->isAnon() ? 'globaluserblocking-contributions-notice-anon' : 'globaluserblocking-contributions-notice';
             $out = $sp->getOutput();

@@ -516,4 +516,13 @@ class GlobalBlockStore {
             'gub_allow_usertalk'       => $block->isUsertalkEditAllowed()
         ];
     }
+
+    /**
+     * @internal
+     * @param GlobalBlock $block
+     * @return array
+     */
+    public function getArrayForBlockHack( GlobalBlock $block ): array {
+        return $this->getArrayForBlock( $block, $this->loadBalancer->getConnection( DB_REPLICA ) );
+    }
 }
