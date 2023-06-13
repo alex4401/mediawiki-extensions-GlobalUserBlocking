@@ -32,6 +32,7 @@
 	"globaluserblocking-blockipsuccesssub": "Global block succeeded",
 	"globaluserblocking-blockipsuccesstext": "[[Special:Contributions/$1|$1]] has been blocked.<br />\nSee the [[Special:GlobalBlockList|global block list]] to review blocks.",
 
+    "globaluserblocking-blocklist-globalblock": "Global blocks",
     "globaluserblocking-blocklist-origin": "Block origin wiki",
 
 	"globaluserblocking-logpage": "Global block log",

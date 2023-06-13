@@ -209,7 +209,7 @@ class SpecialGlobalBlockList extends SpecialPage {
         # Not necessary in a standard installation without such extensions enabled
         if ( count( $otherBlockLink ) ) {
             $out->addHTML(
-                Html::element( 'h2', [], $this->msg( 'ipblocklist-localblock' )->text() ) . "\n"
+                Html::element( 'h2', [], $this->msg( 'globaluserblocking-blocklist-globalblock' )->text() ) . "\n"
             );
         }
 
