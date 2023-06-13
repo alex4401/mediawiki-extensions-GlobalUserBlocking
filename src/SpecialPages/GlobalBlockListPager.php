@@ -324,11 +324,11 @@ class GlobalBlockListPager extends TablePager {
         $lb->setCaller( __METHOD__ );
 
         foreach ( $result as $row ) {
-            if ( $result->gub_target_central_id !== null ) {
-                $targetName = $this->centralIdLookup->nameFromCentralId( $result->gub_target_central_id,
+            if ( $row->gub_target_central_id !== null ) {
+                $targetName = $this->centralIdLookup->nameFromCentralId( $row->gub_target_central_id,
                     CentralIdLookup::AUDIENCE_PUBLIC );
             } else {
-                $targetName = $result->gub_target_address;
+                $targetName = $row->gub_target_address;
             }
 
             $lb->add( NS_USER, $targetName );
