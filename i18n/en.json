@@ -32,6 +32,8 @@
 	"globaluserblocking-blockipsuccesssub": "Global block succeeded",
 	"globaluserblocking-blockipsuccesstext": "[[Special:Contributions/$1|$1]] has been blocked.<br />\nSee the [[Special:GlobalBlockList|global block list]] to review blocks.",
 
+    "globaluserblocking-blocklist-origin": "Block origin wiki",
+
 	"globaluserblocking-logpage": "Global block log",
 	"globaluserblocking-logpagetext": "This is a log of global blocks which have been made or removed on this wiki.\nIt should be noted that global blocks can be made and removed on other wikis, and that these global blocks will affect this wiki.\nTo view all active global blocks, you may view the [[Special:GlobalBlockList|global block list]].",
 	"logentry-globalblock-block": "$1 globally {{GENDER:$2|blocked}} {{GENDER:$4|$3}} with an expiration time of $6 $7 on $5",

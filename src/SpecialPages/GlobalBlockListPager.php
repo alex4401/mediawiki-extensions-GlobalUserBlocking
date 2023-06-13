@@ -26,6 +26,7 @@ use phpDocumentor\Reflection\DocBlock\Tags\Link;
 use stdClass;
 use TablePager;
 use User;
+use WikiMap;
 use Wikimedia\IPUtils;
 use Wikimedia\Rdbms\ILoadBalancer;
 use Wikimedia\Rdbms\IResultWrapper;
@@ -87,6 +88,7 @@ class GlobalBlockListPager extends TablePager {
                 'gub_target_address' => 'blocklist-target',
                 'gub_expiry' => 'blocklist-expiry',
                 'gub_performer_central_id' => 'blocklist-by',
+                'gub_wiki_id' => 'globaluserblocking-blocklist-origin',
                 'gub_params' => 'blocklist-params',
                 'gub_reason' => 'blocklist-reason',
             ];
@@ -137,6 +139,10 @@ class GlobalBlockListPager extends TablePager {
         switch ( $name ) {
             case 'gub_timestamp':
                 $formatted = htmlspecialchars( $language->userTimeAndDate( $value, $this->getUser() ) );
+                break;
+            
+            case 'gub_wiki_id':
+                $formatted = WikiMap::getWikiName( $value );
                 break;
 
             case 'gub_target_address':
@@ -223,7 +229,7 @@ class GlobalBlockListPager extends TablePager {
                 break;
 
             case 'gub_reason':
-                $formatted = $row->gub_reason;
+                $formatted = htmlspecialchars( $row->gub_reason );
                 break;
 
             case 'gub_params':
@@ -274,6 +280,7 @@ class GlobalBlockListPager extends TablePager {
                 'gub_target_central_id',
                 'gub_performer_central_id',
                 'gub_timestamp',
+                'gub_wiki_id',
                 'gub_reason',
                 'gub_anon_only',
                 'gub_create_account',
