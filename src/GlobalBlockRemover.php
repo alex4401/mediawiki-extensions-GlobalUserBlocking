@@ -168,18 +168,13 @@ class GlobalBlockRemover {
      * Log the unblock to Special:Log/globalblock
      */
     private function log() {
-        $page = TitleValue::tryNew( NS_USER, $this->block->getTargetName() );
-
-        $logEntry = new ManualLogEntry( 'globalblock', 'unblock' );
-
-        if ( $page !== null ) {
-            $logEntry->setTarget( $page );
-        }
-        $logEntry->setComment( $this->reason );
-        $logEntry->setPerformer( $this->performer->getUser() );
-        $logEntry->addTags( $this->tags );
-        $logEntry->setRelations( [ 'gub_id' => $this->block->getId() ] );
-        $logId = $logEntry->insert();
-        $logEntry->publish( $logId );
+        Utils::logReplicated( [
+            'action' => 'unblock',
+            'target' => $this->block->getTargetName(),
+            'performer' => $this->performer->getUser(),
+            'reason' => $this->reason,
+            'blockId' => $this->block->getId(),
+            'tags' => $this->tags
+        ] );
     }
 }

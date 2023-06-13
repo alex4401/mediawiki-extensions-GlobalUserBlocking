@@ -83,6 +83,9 @@
 			]
 		}
 	},
+	"JobClasses": {
+		"GubCentralLog": "MediaWiki\\Extension\\GlobalUserBlocking\\Jobs\\CentralGlobalBlockLoggingJob"
+	},
 	
     "HookHandlers": {
         "MainHandler": {

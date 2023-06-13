@@ -392,43 +392,26 @@ class GlobalBlockPlacer {
     }
 
     /**
-     * Prepare $logParams
-     *
-     * Helper method for $this->log()
-     *
-     * @return array
-     */
-    private function constructLogParams(): array {
-        $logExpiry = wfIsInfinity( $this->rawExpiry ) ? 'infinity' : $this->rawExpiry;
-        $logParams = [
-            '5::duration' => $logExpiry,
-            '6::flags' => $this->blockLogFlags()
-        ];
-        return $logParams;
-    }
-
-    /**
      * Log the block to Special:Log
      *
      * @param GlobalBlock $block
      * @param bool $isReblock
      */
     private function log( GlobalBlock $block, bool $isReblock ) {
-        $logType = 'globalblock';
-        $logAction = $isReblock ? 'reblock' : 'block';
-
-        $logEntry = new ManualLogEntry( $logType, $logAction );
-        $logEntry->setTarget( Title::makeTitle( NS_USER, $this->target ) );
-        $logEntry->setComment( $this->reason );
-        $logEntry->setPerformer( $this->performer->getUser() );
-        $logEntry->setParameters( $this->constructLogParams() );
-        $logEntry->setRelations( [ 'gub_id' => $block->getId() ] );
-        $logEntry->addTags( $this->tags );
-        if ( $this->logDeletionFlags !== null ) {
-            $logEntry->setDeleted( $this->logDeletionFlags );
-        }
-        $logId = $logEntry->insert();
-        $logEntry->publish( $logId );
+        $logExpiry = wfIsInfinity( $this->rawExpiry ) ? 'infinity' : $this->rawExpiry;
+        Utils::logReplicated( [
+            'action' => $isReblock ? 'reblock' : 'block',
+            'target' => $this->target,
+            'performer' => $this->performer->getUser(),
+            'reason' => $this->reason,
+            'params' => [
+                '6::duration' => $logExpiry,
+                '7::flags' => $this->blockLogFlags()
+            ],
+            'blockId' => $block->getId(),
+            'tags' => $this->tags,
+            'deletionFlags' => $this->logDeletionFlags
+        ] );
     }
 
     /**
