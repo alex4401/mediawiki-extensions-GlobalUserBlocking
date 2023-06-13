@@ -60,9 +60,9 @@
 		"globalblock/unblock": "globaluserblocking-unblock-logentry"
 	},
 	"LogActionsHandlers": {
-		"globalblock/block": "BlockLogFormatter",
-		"globalblock/reblock": "BlockLogFormatter",
-		"globalblock/unblock": "BlockLogFormatter"
+		"globalblock/block": "MediaWiki\\Extension\\GlobalUserBlocking\\GlobalBlockLogFormatter",
+		"globalblock/reblock": "MediaWiki\\Extension\\GlobalUserBlocking\\GlobalBlockLogFormatter",
+		"globalblock/unblock": "MediaWiki\\Extension\\GlobalUserBlocking\\GlobalBlockLogFormatter"
 	},
 	"ActionFilteredLogs": {
 		"globalblock": {
